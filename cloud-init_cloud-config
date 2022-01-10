@@ -1,0 +1,16 @@
+#cloud-config
+bootcmd:
+ - apt-get -y install apache2
+write_files:
+ -  content: |
+        <!DOCTYPE html>
+        <html>
+          <body>
+            <h1>It works!</h1>
+            <p>hostname</p>
+          </body>
+        </html>
+    path: /var/www/html/index.html
+runcmd:
+ - sed -i "s/hostname/$(hostname)/" /var/www/html/index.html
+ - sed -i "1s/$/ $HOSTNAME/" /etc/hosts
