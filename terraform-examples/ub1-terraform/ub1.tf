@@ -7,11 +7,14 @@ variable "group_number" {
 ## OpenStack credentials can be used in a more secure way by using
 ## cloud.yaml from https://private-cloud.informatik.hs-fulda.de/project/api_access/clouds.yaml/
 
+# or by using env vars exported from openrc here,
+# e.g., using 'export TF_VAR_os_password=$OS_PASSWORD'
+
 # Define OpenStack credentials, project config etc.
 locals {
   auth_url      = "https://private-cloud.informatik.hs-fulda.de:5000/v3"
   user_name     = "IntServ${var.group_number}"
-  user_password = "IntServ.21"
+  user_password = "<password of your group here, private-cloud is only reachable via vpn>"
   tenant_name   = "IntServ${var.group_number}"
   #network_name  = "IntServ${var.group_number}-net"
   router_name   = "IntServ${var.group_number}-router"
