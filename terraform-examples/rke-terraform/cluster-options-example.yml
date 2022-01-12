@@ -59,7 +59,7 @@ rancher_kubernetes_engine_config:
         domain-name: Default
         tenant-id: <id of your project here>
         username: IntServ19
-		password: <your password here>
+        password: <your password here>
       load_balancer:
         create-monitor: false
         floating-network-id: <id of network public1>
