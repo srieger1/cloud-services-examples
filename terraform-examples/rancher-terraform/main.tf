@@ -451,7 +451,21 @@ resource "rancher2_cluster" "hsfd-rke-demo" {
   
 # if instance is gone before deleting the cluster, we'll not be able to
 # reach rke anymore
-  depends_on = [ openstack_compute_instance_v2.terraform-rancher-instance-1 ]
+  depends_on = [
+    openstack_compute_instance_v2.terraform-rancher-instance-1, 
+	openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-ssh, 
+	openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-http, 
+	openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-https, 
+	openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-2376,
+	openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-2379,
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-2380,
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-6443,
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-9099,
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-10250,
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-10254,
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-8472,
+	openstack_compute_floatingip_associate_v2.fip_1
+  ]
 }
 
 # Create a new rancher2 Node Pool
@@ -468,5 +482,19 @@ resource "rancher2_node_pool" "pool1" {
 
 # if instance is gone before deleting the cluster, we'll not be able to
 # reach rke anymore
-  depends_on = [ openstack_compute_instance_v2.terraform-rancher-instance-1 ]
+  depends_on = [
+    openstack_compute_instance_v2.terraform-rancher-instance-1, 
+	openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-ssh, 
+	openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-http, 
+	openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-https, 
+	openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-2376,
+	openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-2379,
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-2380,
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-6443,
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-9099,
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-10250,
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-10254,
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-8472,
+	openstack_compute_floatingip_associate_v2.fip_1
+  ]
 }
