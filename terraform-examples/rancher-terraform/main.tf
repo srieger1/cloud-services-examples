@@ -1,7 +1,8 @@
 # Define IntServ group number
+# TODO: change to use OS env vars etc.
 variable "group_number" {
   type = string
-  default = "20"
+  default = "19"
 }
 
 ## OpenStack credentials can be used in a more secure way by using
@@ -9,15 +10,23 @@ variable "group_number" {
 
 # Define OpenStack credentials, project config etc.
 locals {
-  auth_url      = "https://private-cloud.informatik.hs-fulda.de:5000/v3"
-  user_name     = "IntServ${var.group_number}"
-  user_password = "<password of your group here, private-cloud is only reachable via vpn>"
-  tenant_name   = "IntServ${var.group_number}"
-  #network_name  = "IntServ${var.group_number}-net"
-  router_name   = "IntServ${var.group_number}-router"
-  image_name    = "Ubuntu 20.04 - Focal Fossa - 64-bit - Cloud Based Image"
-  flavor_name   = "m1.medium"
-  region_name   = "RegionOne"
+  auth_url          = "https://private-cloud.informatik.hs-fulda.de:5000/v3"
+  user_name         = "IntServ${var.group_number}"
+  user_password     = "IntServ.21"
+  tenant_name       = "IntServ${var.group_number}"
+  #network_name     = "IntServ${var.group_number}-net"
+  router_name       = "IntServ${var.group_number}-router"
+  image_name        = "Ubuntu 20.04 - Focal Fossa - 64-bit - Cloud Based Image"
+  flavor_name       = "m1.medium"
+  region_name       = "RegionOne"
+  rke_flavor_name   = "m1.medium"
+  availability_zone = "nova"
+  domain_name       = "Default"
+# possibly set floating_ip_pool = "" to avoid assigning floating ips to
+# every created node and use only load balancer as frontend, however needed
+# for node port forwarding etc. using kube proxy
+  floating_ip_pool  = "public1"
+  ssh_user          = "ubuntu"
 }
 
 # Define OpenStack provider
@@ -27,6 +36,10 @@ required_version = ">= 0.14.0"
     openstack = {
       source  = "terraform-provider-openstack/openstack"
       version = ">= 1.46.0"
+    }
+    rancher2 = {
+      source = "rancher/rancher2"
+      version = ">= 1.22.2"
     }
   }
 }
@@ -233,13 +246,13 @@ resource "openstack_compute_instance_v2" "terraform-rancher-instance-1" {
     apt-get update
     apt-get -y upgrade
     curl https://releases.rancher.com/install-docker/20.10.sh | sh
-    sudo docker run --privileged -d --restart=unless-stopped -p 80:80 -p 443:443 rancher/rancher
-    sudo docker ps
+    sudo docker run --privileged -d --restart=unless-stopped -p 80:80 -p 443:443 --env CATTLE_BOOTSTRAP_PASSWORD=this-is-not-a-secure-bootstrap-pw rancher/rancher
+    #sudo docker ps
     #sudo docker logs $(sudo docker ps | grep rancher | cut -d " " -f 1) 2>&1 | grep "Bootstrap Password:"
   EOF
 
   depends_on = [
-    "openstack_networking_subnet_v2.terraform-rancher-subnet-1"
+    openstack_networking_subnet_v2.terraform-rancher-subnet-1
   ]
 }
 
@@ -247,7 +260,7 @@ resource "openstack_compute_instance_v2" "terraform-rancher-instance-1" {
 
 ###########################################################################
 #
-# assign floating ip to load balancer
+# assign floating ip to rancher instance
 #
 ###########################################################################
 resource "openstack_networking_floatingip_v2" "fip_1" {
@@ -261,4 +274,181 @@ resource "openstack_compute_floatingip_associate_v2" "fip_1" {
 
 output "floating_ip" {
   value = openstack_networking_floatingip_v2.fip_1
+}
+
+###########################################################################
+#
+# bootstrap rancher
+#
+###########################################################################
+
+# Provider bootstrap config
+provider "rancher2" {
+  alias = "bootstrap"
+
+  api_url   = "https://${openstack_networking_floatingip_v2.fip_1.address}"
+  bootstrap = true
+  insecure = true
+  timeout = "300s"
+}
+
+# Create a new rancher2_bootstrap for Rancher v2.6.0 and above
+resource "rancher2_bootstrap" "admin" {
+  provider = rancher2.bootstrap
+  initial_password = "this-is-not-a-secure-bootstrap-pw"
+  password = "this-is-not-a-secure-admin-pw"
+  telemetry = true
+  token_update=true
+}
+
+# Rancher2 administration provider
+provider "rancher2" {
+  alias = "admin"
+
+  api_url  = "https://${openstack_networking_floatingip_v2.fip_1.address}"
+  insecure = true
+  # ca_certs  = data.kubernetes_secret.rancher_cert.data["ca.crt"]
+  token_key = rancher2_bootstrap.admin.token
+}
+
+###########################################################################
+#
+# enable rancher node driver openstack
+#
+###########################################################################
+
+#data "rancher2_node_driver" "OpenStack" {
+#  provider = rancher2.admin
+#  name = "openstack"
+#}
+
+# Create a new rancher2 Node Driver
+# TODO: creates a new builtin driver, maybe better to change existing one
+resource "rancher2_node_driver" "OpenStack" {
+  provider = rancher2.admin
+  name = "openstack"
+  active = true
+  builtin = true
+  url = "local://"
+#  external_id = data.rancher2_node_driver.OpenStack
+}
+
+###########################################################################
+#
+# create rancher node template for hsfd openstack
+#
+###########################################################################
+
+resource "rancher2_node_template" "hsfd-rancher-openstack" {
+  provider = rancher2.admin
+  name = "hsfd-rancher-openstack"
+  driver_id = rancher2_node_driver.OpenStack.id
+  openstack_config {
+    auth_url = local.auth_url
+    availability_zone = local.availability_zone
+    region = local.region_name
+    username = local.user_name
+    # (Optional/Sensitive) OpenStack password. Mandatory on Rancher v2.0.x and v2.1.x. Use rancher2_cloud_credential from Rancher v2.2.x (string)
+    password = local.user_password
+    active_timeout = "200"
+    domain_name = local.domain_name
+    boot_from_volume = false
+    flavor_name = local.rke_flavor_name
+    floating_ip_pool = local.floating_ip_pool
+    image_name = local.image_name
+    ip_version = "4"
+    keypair_name = openstack_compute_keypair_v2.terraform-rancher-keypair.name
+    net_id = openstack_networking_network_v2.terraform-rancher-network-1.id
+    sec_groups = openstack_networking_secgroup_v2.terraform-rancher-secgroup.name
+    ssh_user = local.ssh_user
+    private_key_file = openstack_compute_keypair_v2.terraform-rancher-keypair.private_key
+    tenant_name = local.tenant_name
+  }
+  engine_install_url = "https://releases.rancher.com/install-docker/20.10.sh"
+}
+
+###########################################################################
+#
+# create rke template for hsfd openstack
+#
+###########################################################################
+
+data "openstack_identity_project_v3" "my-project" {
+  name = local.tenant_name
+}
+
+data "openstack_networking_network_v2" "public1" {
+  name = local.floating_ip_pool
+}
+
+# Create a new rancher2 Cluster Template
+resource "rancher2_cluster_template" "hsfd-rke-openstack" {
+  provider = rancher2.admin
+  name = "hsfd-rke-openstack"
+  template_revisions {
+    name = "V1"
+    cluster_config {
+      rke_config {
+        cloud_provider {
+          name = "openstack"
+          openstack_cloud_provider {
+            block_storage {
+              ignore_volume_az = true
+              trust_device_path = false
+            }
+            global {
+              auth_url = local.auth_url
+              domain_name = local.domain_name
+              tenant_id = data.openstack_identity_project_v3.my-project.id
+              username = local.user_name
+              password = local.user_password
+            }
+            load_balancer {
+              create_monitor = false
+              floating_network_id = data.openstack_networking_network_v2.public1.id
+              lb_version = "v2"
+              manage_security_groups = true
+              monitor_max_retries = 0
+              subnet_id = openstack_networking_subnet_v2.terraform-rancher-subnet-1.id
+              use_octavia = true
+            }
+            metadata {
+              request_timeout = 0
+            }
+            route {
+              router_id = data.openstack_networking_router_v2.router-1.id
+            }
+          }
+        }
+      }
+    }
+    default = true
+  }
+  description = "Terraform RKE template for HSFD OpenStack"
+}
+
+###########################################################################
+#
+# create rke demo cluster
+#
+###########################################################################
+
+resource "rancher2_cluster" "hsfd-rke-demo" {
+  provider = rancher2.admin
+  name = "hsfd-rke-demo"
+  cluster_template_id = rancher2_cluster_template.hsfd-rke-openstack.id
+  cluster_template_revision_id = rancher2_cluster_template.hsfd-rke-openstack.template_revisions.0.id
+}
+
+# Create a new rancher2 Node Pool
+resource "rancher2_node_pool" "pool1" {
+  provider = rancher2.admin
+  cluster_id =  rancher2_cluster.hsfd-rke-demo.id
+  name = "ctrl-etcd-work"
+  hostname_prefix =  "ctrl-etcd-work"
+  node_template_id = rancher2_node_template.hsfd-rancher-openstack.id
+  quantity = 1
+  control_plane = true
+  etcd = true
+  worker = true
 }
