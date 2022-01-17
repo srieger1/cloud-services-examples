@@ -291,7 +291,8 @@ provider "rancher2" {
   api_url   = "https://${openstack_networking_floatingip_v2.fip_1.address}"
   bootstrap = true
   insecure = true
-  timeout = "300s"
+# takes roughly ~7 minutes currently
+  timeout = "600s"
 }
 
 # Create a new rancher2_bootstrap for Rancher v2.6.0 and above
@@ -447,6 +448,10 @@ resource "rancher2_cluster" "hsfd-rke-demo" {
   name = "hsfd-rke-demo"
   cluster_template_id = rancher2_cluster_template.hsfd-rke-openstack.id
   cluster_template_revision_id = rancher2_cluster_template.hsfd-rke-openstack.template_revisions.0.id
+  
+# if instance is gone before deleting the cluster, we'll not be able to
+# reach rke anymore
+  depends_on = [ openstack_compute_instance_v2.terraform-rancher-instance-1 ]
 }
 
 # Create a new rancher2 Node Pool
@@ -460,4 +465,8 @@ resource "rancher2_node_pool" "pool1" {
   control_plane = true
   etcd = true
   worker = true
+
+# if instance is gone before deleting the cluster, we'll not be able to
+# reach rke anymore
+  depends_on = [ openstack_compute_instance_v2.terraform-rancher-instance-1 ]
 }
