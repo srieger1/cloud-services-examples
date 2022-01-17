@@ -12,7 +12,7 @@ variable "group_number" {
 locals {
   auth_url          = "https://private-cloud.informatik.hs-fulda.de:5000/v3"
   user_name         = "IntServ${var.group_number}"
-  user_password     = "IntServ.21"
+  user_password     = "<password of your group here, private-cloud is only reachable via vpn>"
   tenant_name       = "IntServ${var.group_number}"
   #network_name     = "IntServ${var.group_number}-net"
   router_name       = "IntServ${var.group_number}-router"
@@ -80,6 +80,8 @@ resource "openstack_networking_secgroup_v2" "terraform-rancher-secgroup" {
   name        = "my-terraform-rancher-secgroup"
   description = "for terraform rancher instances"
 }
+
+# TODO: possibly cleanup unnecessary ports?
 
 resource "openstack_networking_secgroup_rule_v2" "terraform-secgroup-rule-ssh" {
   direction         = "ingress"
@@ -333,6 +335,8 @@ resource "rancher2_node_driver" "OpenStack" {
 #  external_id = data.rancher2_node_driver.OpenStack
 }
 
+
+
 ###########################################################################
 #
 # create rancher node template for hsfd openstack
@@ -348,7 +352,7 @@ resource "rancher2_node_template" "hsfd-rancher-openstack" {
     availability_zone = local.availability_zone
     region = local.region_name
     username = local.user_name
-    # (Optional/Sensitive) OpenStack password. Mandatory on Rancher v2.0.x and v2.1.x. Use rancher2_cloud_credential from Rancher v2.2.x (string)
+# TODO: (Optional/Sensitive) OpenStack password. Mandatory on Rancher v2.0.x and v2.1.x. Use rancher2_cloud_credential from Rancher v2.2.x (string)
     password = local.user_password
     active_timeout = "200"
     domain_name = local.domain_name
@@ -364,8 +368,11 @@ resource "rancher2_node_template" "hsfd-rancher-openstack" {
     private_key_file = openstack_compute_keypair_v2.terraform-rancher-keypair.private_key
     tenant_name = local.tenant_name
   }
+# TODO: get latest recommended string possible?
   engine_install_url = "https://releases.rancher.com/install-docker/20.10.sh"
 }
+
+
 
 ###########################################################################
 #
@@ -426,6 +433,8 @@ resource "rancher2_cluster_template" "hsfd-rke-openstack" {
   }
   description = "Terraform RKE template for HSFD OpenStack"
 }
+
+
 
 ###########################################################################
 #
