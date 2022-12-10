@@ -65,7 +65,7 @@ provider "openstack" {
 # import keypair, if public_key is not specified, create new keypair to use
 resource "openstack_compute_keypair_v2" "terraform-rancher-keypair" {
   name       = "my-terraform-rancher-pubkey"
-  # public_key = file("~/srieger_rsa.pub")
+  # public_key = file("~/.ssh/id_ed25519.pub")
 }
 
 
@@ -195,7 +195,6 @@ resource "openstack_networking_secgroup_rule_v2" "terraform-secgroup-rule-8472" 
 
 
 
-
 ###########################################################################
 #
 # create network
@@ -274,13 +273,15 @@ resource "openstack_compute_floatingip_associate_v2" "fip_1" {
   instance_id = "${openstack_compute_instance_v2.terraform-rancher-instance-1.id}"
 }
 
-output "floating_ip" {
-  value = openstack_networking_floatingip_v2.fip_1
-}
+
 
 ###########################################################################
 #
 # bootstrap rancher
+#
+# takes roughly ~8 minutes currently, hence the long timeout
+# ~5 mins to install Ubuntu and installing updates
+# ~3 mins to install docker and pull/start rancher container
 #
 ###########################################################################
 
@@ -291,8 +292,7 @@ provider "rancher2" {
   api_url   = "https://${openstack_networking_floatingip_v2.fip_1.address}"
   bootstrap = true
   insecure = true
-# takes roughly ~7 minutes currently
-  timeout = "600s"
+  timeout = "900s"
 }
 
 # Create a new rancher2_bootstrap for Rancher v2.6.0 and above
@@ -302,9 +302,27 @@ resource "rancher2_bootstrap" "admin" {
   password = "this-is-not-a-secure-admin-pw"
   telemetry = true
   token_update=true
+
+  depends_on = [
+    openstack_compute_floatingip_associate_v2.fip_1,
+    openstack_compute_instance_v2.terraform-rancher-instance-1,
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-ssh, 
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-http, 
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-https, 
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-2376,
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-2379,
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-2380,
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-6443,
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-9099,
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-10250,
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-10254,
+    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-8472,
+    openstack_networking_router_interface_v2.router_interface_1
+  ]
 }
 
 # Rancher2 administration provider
+# provider chaining/using multiple providers should be avoided?
 provider "rancher2" {
   alias = "admin"
 
@@ -333,7 +351,11 @@ resource "rancher2_node_driver" "OpenStack" {
   active = true
   builtin = true
   url = "local://"
-#  external_id = data.rancher2_node_driver.OpenStack
+  # external_id = data.rancher2_node_driver.OpenStack
+
+  depends_on = [
+    rancher2_bootstrap.admin
+  ]
 }
 
 
@@ -353,12 +375,13 @@ resource "rancher2_node_template" "hsfd-rancher-openstack" {
     availability_zone = local.availability_zone
     region = local.region_name
     username = local.user_name
-# TODO: (Optional/Sensitive) OpenStack password. Mandatory on Rancher v2.0.x and v2.1.x. Use rancher2_cloud_credential from Rancher v2.2.x (string)
+    # TODO: (Optional/Sensitive) OpenStack password. Mandatory on Rancher v2.0.x and v2.1.x. Use rancher2_cloud_credential from Rancher v2.2.x (string)
     password = local.user_password
     active_timeout = "200"
     domain_name = local.domain_name
     boot_from_volume = false
     flavor_name = local.rke_flavor_name
+    # to prevent node from consuming a floating IP comment out the next line
     floating_ip_pool = local.floating_ip_pool
     image_name = local.image_name
     ip_version = "4"
@@ -369,8 +392,12 @@ resource "rancher2_node_template" "hsfd-rancher-openstack" {
     private_key_file = openstack_compute_keypair_v2.terraform-rancher-keypair.private_key
     tenant_name = local.tenant_name
   }
-# TODO: get latest recommended string possible?
+  # TODO: get latest recommended string possible?
   engine_install_url = "https://releases.rancher.com/install-docker/20.10.sh"
+
+  depends_on = [
+    rancher2_node_driver.OpenStack
+  ]
 }
 
 
@@ -403,6 +430,7 @@ resource "rancher2_cluster_template" "hsfd-rke-openstack" {
             block_storage {
               ignore_volume_az = true
               trust_device_path = false
+              bs_version = "v3"
             }
             global {
               auth_url = local.auth_url
@@ -433,6 +461,36 @@ resource "rancher2_cluster_template" "hsfd-rke-openstack" {
     default = true
   }
   description = "Terraform RKE template for HSFD OpenStack"
+
+  depends_on = [
+    rancher2_node_template.hsfd-rancher-openstack
+  ]
+}
+
+
+
+###########################################################################
+#
+# wait for rancher host to be fully initialized, fixes cluster deployment
+# hanging in:
+#
+# "Kubernetes version (spec.rancherKubernetesEngineConfig.
+#  kubernetesVersion) is unset"
+#
+# that occurs in our recent rancher deployments since November 2022
+#
+# fix needs to be improved, e.g., by calling Rancher API to wait for k8s
+# version to be available etc., though this should normaly be complete 
+# after bootstrapping and was like that over that last years?
+#
+###########################################################################
+
+resource "time_sleep" "wait_for_k8sversion" {
+  create_duration = "30s"
+
+  depends_on = [
+    rancher2_cluster_template.hsfd-rke-openstack
+  ]
 }
 
 
@@ -440,6 +498,8 @@ resource "rancher2_cluster_template" "hsfd-rke-openstack" {
 ###########################################################################
 #
 # create rke demo cluster
+#
+# takes about 8 mins to install with one (all-in-one) cluster node
 #
 ###########################################################################
 
@@ -452,19 +512,8 @@ resource "rancher2_cluster" "hsfd-rke-demo" {
 # if instance is gone before deleting the cluster, we'll not be able to
 # reach rke anymore
   depends_on = [
-    openstack_compute_instance_v2.terraform-rancher-instance-1, 
-	openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-ssh, 
-	openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-http, 
-	openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-https, 
-	openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-2376,
-	openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-2379,
-    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-2380,
-    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-6443,
-    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-9099,
-    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-10250,
-    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-10254,
-    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-8472,
-	openstack_compute_floatingip_associate_v2.fip_1
+    time_sleep.wait_for_k8sversion,
+    rancher2_cluster_template.hsfd-rke-openstack,
   ]
 }
 
@@ -480,21 +529,31 @@ resource "rancher2_node_pool" "pool1" {
   etcd = true
   worker = true
 
-# if instance is gone before deleting the cluster, we'll not be able to
-# reach rke anymore
-  depends_on = [
-    openstack_compute_instance_v2.terraform-rancher-instance-1, 
-	openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-ssh, 
-	openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-http, 
-	openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-https, 
-	openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-2376,
-	openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-2379,
-    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-2380,
-    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-6443,
-    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-9099,
-    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-10250,
-    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-10254,
-    openstack_networking_secgroup_rule_v2.terraform-secgroup-rule-8472,
-	openstack_compute_floatingip_associate_v2.fip_1
-  ]
+  depends_on = [rancher2_cluster.hsfd-rke-demo]
+}
+
+
+
+output "finished" {
+  value = <<FINISHED
+  You can access rancher at https://${openstack_networking_floatingip_v2.fip_1.address}.
+  You need a VPN connection if you want to access the node from external networks.
+
+  You can login using user 'admin' and password 'this-is-not-a-secure-admin-pw'.
+  Progress of the cluster deployment can be seen in 'Cluster Management'.
+
+  The default 1-node cluster deployment should be ready in about 8 mins in our
+  environment.
+
+  The cluster deployment needs to be able to reserve a new floating IP, so be sure
+  to have a floating IP avaiable. You can disable the assignment of a floating IP
+  for each cluster node, as services will be accessible through a load balancer.
+  However, then you cannot use kubernetes node ports etc.
+
+  Cluster size can be increased using the scaling buttons for the node pool, or
+  by modifying the node pool before the terraform deployment. 3 node clusters
+  are a typical start for production environments, as explained in the course.
+
+  For futher details, see also comments in the template file.
+  FINISHED
 }

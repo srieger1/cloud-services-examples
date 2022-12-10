@@ -14,7 +14,7 @@ variable "group_number" {
 locals {
   auth_url      = "https://private-cloud.informatik.hs-fulda.de:5000/v3"
   user_name     = "IntServ${var.group_number}"
-  user_password = "<password of your group here, private-cloud is only reachable via vpn>"
+  user_password = "demo"
   tenant_name   = "IntServ${var.group_number}"
   #network_name  = "IntServ${var.group_number}-net"
   router_name   = "IntServ${var.group_number}-router"
