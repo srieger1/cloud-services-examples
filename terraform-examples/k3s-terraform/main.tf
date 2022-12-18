@@ -1,7 +1,7 @@
 # Define IntServ group number
 variable "group_number" {
   type = string
-  default = "18"
+  default = "20"
 }
 
 ## OpenStack credentials can be used in a more secure way by using
@@ -14,7 +14,7 @@ variable "group_number" {
 locals {
   auth_url      = "https://private-cloud.informatik.hs-fulda.de:5000/v3"
   user_name     = "IntServ${var.group_number}"
-  user_password = "demo"
+  user_password = "<password of your group here, private-cloud is only reachable via vpn>"
   tenant_name   = "IntServ${var.group_number}"
   #network_name  = "IntServ${var.group_number}-net"
   router_name   = "IntServ${var.group_number}-router"
