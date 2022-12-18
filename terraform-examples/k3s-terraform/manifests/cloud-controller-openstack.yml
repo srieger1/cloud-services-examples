@@ -1,0 +1,37 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: openstack-cloud-controller-manager
+  namespace: kube-system
+spec:
+  chart: openstack-cloud-controller-manager
+  repo: https://kubernetes.github.io/cloud-provider-openstack
+  version: 1.4.0
+  targetNamespace: kube-system
+  bootstrap: true
+  valuesContent: |-
+    nodeSelector:
+      node-role.kubernetes.io/master: "true"
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+    cloudConfig:
+      global:
+        auth-url: "https://private-cloud.informatik.hs-fulda.de:5000/v3"
+        username: "IntServ18"
+        password: "demo"
+        domain-name: "Default"
+        region: "RegionOne"
+        tenant-name: "IntServ18"
+    loadBalancer:
+        floating-network-id: c5ed0f0a-57ca-4b0b-884b-0c1944573650
+        subnet-id: <subnet-id>
+        network-id: <network-id>
+        lb-provider: amphora
+        manage-security-groups: true
+        max-shared-lb: 10
+    controllerExtraArgs: |-
+      - --use-service-account-credentials=false
+    cluster:
+      name: "default"
