@@ -20,6 +20,6 @@ kubectl --kubeconfig /etc/rancher/k3s/k3s.yml get nodes
 kubectl --kubeconfig /etc/rancher/k3s/k3s.yml get pods -n kube-system
 ```
 
-As this is a minimalistic approach, you need to install everything else manually. E.g., you can find a helm chart to deploy openstack-cloud-controller and other examples in https://github.com/srieger1/internet-services-bsc-ai-examples/tree/main/terraform-examples/k3s-terraform/manifests.
+As this is a minimalistic approach, you need to install everything else yourself (kubernetes deployments, services, daemonsets, pods etc.). E.g., you can find a helm chart to deploy openstack-cloud-controller and other examples in https://github.com/srieger1/internet-services-bsc-ai-examples/tree/main/terraform-examples/k3s-terraform/manifests.
 
-When you do not want to manage Kubernetes entirely manually, you can use the RKE2 deployment provided at: https://github.com/srieger1/terraform-openstack-rke2. A deployment that requires even less manual intervention and provides the installation of a Kubernetes cluster using the Web UI of a rancher deployment host is provided here: https://github.com/srieger1/internet-services-bsc-ai-examples/tree/main/terraform-examples/rancher-terraform.
+When you do not want to manage Kubernetes entirely on your own, you can use the RKE2 deployment provided at: https://github.com/srieger1/terraform-openstack-rke2. A deployment that requires even less manual intervention and provides the installation of a Kubernetes cluster using the Web UI of a rancher deployment host is provided here: https://github.com/srieger1/internet-services-bsc-ai-examples/tree/main/terraform-examples/rancher-terraform.
