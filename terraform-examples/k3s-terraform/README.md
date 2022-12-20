@@ -14,10 +14,10 @@ terraform apply
 ```
 
 After terraform is finished you will get a floating IP of the k3s server. Login using the SSH key used for the deployment. kubectl is already installed. helm etc. needs to be installed. You can check:
-
+You only need the parameter --kubeconfig the first time you use kubectl.
 ```
-kubectl --kubeconfig /etc/rancher/k3s/k3s.yml get nodes
-kubectl --kubeconfig /etc/rancher/k3s/k3s.yml get pods -n kube-system
+kubectl --kubeconfig /etc/rancher/k3s/k3s.yaml get nodes
+kubectl --kubeconfig /etc/rancher/k3s/k3s.yaml get pods -n kube-system
 ```
 
 As this is a minimalistic approach, you need to install everything else yourself (kubernetes deployments, services, daemonsets, pods etc.). E.g., you can find a helm chart to deploy openstack-cloud-controller and other examples in https://github.com/srieger1/internet-services-bsc-ai-examples/tree/main/terraform-examples/k3s-terraform/manifests.
