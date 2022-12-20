@@ -182,7 +182,8 @@ resource "openstack_compute_instance_v2" "k3s-server-1" {
     #  - curl -sfL https://get.k3s.io | K3S_TOKEN="this-is-not-a-secure-token" sh -s - server --disable-cloud-controller --disable=servicelb --kubelet-arg="cloud-provider=external" --node-external-ip ${openstack_networking_floatingip_v2.fip_1.address}
     runcmd:
       - curl -sfL https://get.k3s.io | K3S_TOKEN="this-is-not-a-secure-token" sh -s - server --disable-cloud-controller --disable servicelb --disable=traefik --kubelet-arg="cloud-provider=external" --node-external-ip ${openstack_networking_floatingip_v2.fip_1.address}
-  EOF
+      - sudo chmod 777 /etc/rancher/k3s/k3s.yaml 
+ EOF
 }
 
 resource "openstack_compute_instance_v2" "k3s-agent-1" {
