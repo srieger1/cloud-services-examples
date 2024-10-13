@@ -1,1 +1,1 @@
-# internet-services-bsc-ai-examples
+# cloud-services-bsc-ai-examples
