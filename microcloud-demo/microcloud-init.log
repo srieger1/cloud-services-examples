@@ -1,0 +1,79 @@
+netlabadmin@microcloud1:~$ ./microcloud-setup.sh
+lxd (5.21/stable) 5.21.2-2f4ba6b from Canonical✓ installed
+microceph (quincy/stable) 0+git.4a608fc from Canonical✓ installed
+microovn (22.03/stable) 22.03.3+snapcad8ee9dc5 from Canonical✓ installed
+microcloud 1.1-04a1c49 from Canonical✓ installed
+General refreshes of "lxd", "microceph", "microovn", "microcloud" held indefinitely
+netlabadmin@microcloud1:~$ ./microcloud-init.sh
+Waiting for LXD to start...
+Select an address for MicroCloud's internal traffic:
+
+ Using address "10.33.19.51" for MicroCloud
+
+Limit search for other MicroCloud servers to 10.33.19.51/20? (yes/no) [default=yes]:
+Scanning for eligible servers ...
+
+ Selected "microcloud1" at "10.33.19.51"
+ Selected "microcloud3" at "10.33.19.53"
+ Selected "microcloud2" at "10.33.19.52"
+
+Would you like to set up local storage? (yes/no) [default=yes]:
+Select exactly one disk from each cluster member:
+
+Select which disks to wipe:
+
+ Using "/dev/disk/by-id/wwn-0x5000039fe5f357de" on "microcloud1" for local storage pool
+ Using "/dev/disk/by-id/wwn-0x5000039fe5f364ce" on "microcloud2" for local storage pool
+ Using "/dev/disk/by-id/wwn-0x5000039fe5f364ab" on "microcloud3" for local storage pool
+
+Would you like to set up distributed storage? (yes/no) [default=yes]:
+Select from the available unpartitioned disks:
+
+Select which disks to wipe:
+
+ Using 1 disk(s) on "microcloud1" for remote storage pool
+ Using 1 disk(s) on "microcloud3" for remote storage pool
+ Using 1 disk(s) on "microcloud2" for remote storage pool
+
+Configure distributed networking? (yes/no) [default=yes]:
+Select exactly one network interface from each cluster member:
+
+ Using "enx2887bac0f856" on "microcloud2" for OVN uplink
+ Using "enx2887bac0f07c" on "microcloud1" for OVN uplink
+ Using "enx2887bac0ed89" on "microcloud3" for OVN uplink
+
+Specify the IPv4 gateway (CIDR) on the uplink network (empty to skip IPv4): 10.32.16.1/20
+Specify the first IPv4 address in the range to use with LXD: 10.33.19.54
+Specify the last IPv4 address in the range to use with LXD: 10.33.19.59
+Specify the IPv6 gateway (CIDR) on the uplink network (empty to skip IPv6):
+Initializing a new cluster
+ Local MicroCloud is ready
+ Local LXD is ready
+ Local MicroOVN is ready
+ Local MicroCeph is ready
+Awaiting cluster formation ...
+ Peer "microcloud2" has joined the cluster
+ Peer "microcloud3" has joined the cluster
+Configuring cluster-wide devices ...
+Error: Failed allocating uplink port IPs on network "UPLINK": Failed to parse uplink IPv4 OVN ranges: IP range "10.33.19.54-10.33.19.59" does not fall within any of the allowed networks [10.32.16.0/20]
+netlabadmin@microcloud1:~$ ^C
+netlabadmin@microcloud1:~$ lxc network set UPLINK dns.nameservers=10.33.16.100
+If this is your first time running LXD on this machine, you should also run: lxd init
+To start your first container, try: lxc launch ubuntu:24.04
+Or for a virtual machine: lxc launch ubuntu:24.04 --vm
+
+netlabadmin@microcloud1:~$ lxc launch ubuntu:24.04 u1
+Creating u1
+Error: Failed instance creation: Failed creating instance record: Failed initialising instance: Failed getting root disk: No root device could be found
+netlabadmin@microcloud1:~$ lxc launch ubuntu:24.04 u1 --storage local
+Creating u1
+Error: Failed instance creation: Failed creating instance record: Failed initialising instance: Failed add validation for device "root": Pool "local" is pending
+netlabadmin@microcloud1:~$ lxc storage list
++--------+--------+-------------+---------+---------+
+|  NAME  | DRIVER | DESCRIPTION | USED BY |  STATE  |
++--------+--------+-------------+---------+---------+
+| local  | zfs    |             | 0       | PENDING |
++--------+--------+-------------+---------+---------+
+| remote | ceph   |             | 0       | PENDING |
++--------+--------+-------------+---------+---------+
+netlabadmin@microcloud1:~$

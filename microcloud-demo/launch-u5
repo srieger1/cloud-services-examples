@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# see https://canonical-microcloud.readthedocs-hosted.com/en/latest/microcloud/tutorial/get_started/ for more examples
+
+lxc launch ubuntu:24.04 u5 --config=user.user-data="$(cat ./cloud-config-nginx)"

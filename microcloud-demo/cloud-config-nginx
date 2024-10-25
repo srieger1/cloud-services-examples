@@ -1,0 +1,10 @@
+#cloud-config
+
+# see cloud-config (declarative) examples: https://cloudinit.readthedocs.io/en/latest/reference/examples.html
+# easier version (imerative): https://cloudinit.readthedocs.io/en/latest/explanation/format.html#id2
+
+# update package list (e.g., "apt update" or "yumi/dnf update"
+package_update: true
+# install package nginx
+packages:
+- nginx
