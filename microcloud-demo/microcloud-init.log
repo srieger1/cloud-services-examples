@@ -189,5 +189,18 @@ No user sessions are running outdated binaries.
 No VM guests are running outdated hypervisor (qemu) binaries on this host.
 Cloud-init v. 24.3.1-0ubuntu0~24.04.2 finished at Fri, 25 Oct 2024 19:50:25 +0000. Datasource DataSourceLXD.  Up 46.35 seconds
 ^C
+netlabadmin@microcloud1:~$ lxc exec u5 bash
+root@u5:~# ps aux | grep nginx
+root        1010  0.0  0.0  11156   972 ?        Ss   19:50   0:00 nginx: master process /usr/sbin/nginx -g daemon on; master_process on;
+www-data    1011  0.0  0.0  12880  4104 ?        S    19:50   0:00 nginx: worker process
+www-data    1012  0.0  0.0  12880  4104 ?        S    19:50   0:00 nginx: worker process
+www-data    1013  0.0  0.0  12880  4104 ?        S    19:50   0:00 nginx: worker process
+www-data    1014  0.0  0.0  12880  4104 ?        S    19:50   0:00 nginx: worker process
+www-data    1015  0.0  0.0  12880  4104 ?        S    19:50   0:00 nginx: worker process
+www-data    1016  0.0  0.0  12880  4104 ?        S    19:50   0:00 nginx: worker process
+www-data    1017  0.0  0.0  12880  4104 ?        S    19:50   0:00 nginx: worker process
+www-data    1018  0.0  0.0  12880  4104 ?        S    19:50   0:00 nginx: worker process
+root        1102  0.0  0.0   7076  2044 pts/1    S+   19:52   0:00 grep --color=auto nginx
 root@u5:~# 
+
 
