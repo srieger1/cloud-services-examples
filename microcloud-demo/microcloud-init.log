@@ -76,4 +76,20 @@ netlabadmin@microcloud1:~$ lxc storage list
 +--------+--------+-------------+---------+---------+
 | remote | ceph   |             | 0       | PENDING |
 +--------+--------+-------------+---------+---------+
-netlabadmin@microcloud1:~$
+netlabadmin@microcloud1:~$ lxc storage list
++--------+--------+-----------------------------+---------+---------+
+|  NAME  | DRIVER |         DESCRIPTION         | USED BY |  STATE  |
++--------+--------+-----------------------------+---------+---------+
+| local  | zfs    | Local storage on ZFS        | 6       | CREATED |
++--------+--------+-----------------------------+---------+---------+
+| remote | ceph   | Distributed storage on Ceph | 1       | CREATED |
++--------+--------+-----------------------------+---------+---------+
+netlabadmin@microcloud1:~$ lxc launch ubuntu:24.04 container1
+Creating container1
+Starting container1                         
+netlabadmin@microcloud1:~$ lxc launch ubuntu:22.04 container2 --storage local
+Creating container2
+Starting container2                         
+netlabadmin@microcloud1:~$ lxc launch ubuntu:22.04 vm1 --vm
+Creating vm1
+Starting vm1                                  
