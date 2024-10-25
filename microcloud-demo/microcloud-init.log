@@ -103,4 +103,91 @@ netlabadmin@microcloud1:~$ lxc list
 +------------+---------+---------------------+-----------------------------------------------+-----------------+-----------+-------------+
 | vm1        | RUNNING | 10.37.77.4 (enp5s0) | fd42:bd9:f08f:124:216:3eff:fe6e:c012 (enp5s0) | VIRTUAL-MACHINE | 0         | microcloud2 |
 +------------+---------+---------------------+-----------------------------------------------+-----------------+-----------+-------------+
-netlabadmin@microcloud1:~$ 
+netlabadmin@microcloud1:~$ lxc list
++------------+---------+---------------------+-----------------------------------------------+-----------------+-----------+-------------+
+|    NAME    |  STATE  |        IPV4         |                     IPV6                      |      TYPE       | SNAPSHOTS |  LOCATION   |
++------------+---------+---------------------+-----------------------------------------------+-----------------+-----------+-------------+
+| container1 | RUNNING | 10.37.77.2 (eth0)   | fd42:bd9:f08f:124:216:3eff:feb7:20dc (eth0)   | CONTAINER       | 0         | microcloud1 |
++------------+---------+---------------------+-----------------------------------------------+-----------------+-----------+-------------+
+| container2 | RUNNING | 10.37.77.3 (eth0)   | fd42:bd9:f08f:124:216:3eff:fead:f605 (eth0)   | CONTAINER       | 0         | microcloud3 |
++------------+---------+---------------------+-----------------------------------------------+-----------------+-----------+-------------+
+| vm1        | RUNNING | 10.37.77.4 (enp5s0) | fd42:bd9:f08f:124:216:3eff:fe6e:c012 (enp5s0) | VIRTUAL-MACHINE | 0         | microcloud2 |
++------------+---------+---------------------+-----------------------------------------------+-----------------+-----------+-------------+
+netlabadmin@microcloud1:~$ lxc exec container1 bash
+root@container1:~# ping www.google.de
+PING www.google.de (142.250.74.195) 56(84) bytes of data.
+64 bytes from fra24s02-in-f3.1e100.net (142.250.74.195): icmp_seq=1 ttl=58 time=5.02 ms
+64 bytes from fra24s02-in-f3.1e100.net (142.250.74.195): icmp_seq=2 ttl=58 time=3.45 ms
+^C
+--- www.google.de ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1001ms
+rtt min/avg/max/mdev = 3.447/4.235/5.024/0.788 ms
+root@container1:~# exit
+exit
+netlabadmin@microcloud1:~$ ./launch-u5 
+Creating u5
+Starting u5
+netlabadmin@microcloud1:~$ lxc list
++------------+---------+---------------------+-----------------------------------------------+-----------------+-----------+-------------+
+|    NAME    |  STATE  |        IPV4         |                     IPV6                      |      TYPE       | SNAPSHOTS |  LOCATION   |
++------------+---------+---------------------+-----------------------------------------------+-----------------+-----------+-------------+
+| container1 | RUNNING | 10.37.77.2 (eth0)   | fd42:bd9:f08f:124:216:3eff:feb7:20dc (eth0)   | CONTAINER       | 0         | microcloud1 |
++------------+---------+---------------------+-----------------------------------------------+-----------------+-----------+-------------+
+| container2 | RUNNING | 10.37.77.3 (eth0)   | fd42:bd9:f08f:124:216:3eff:fead:f605 (eth0)   | CONTAINER       | 0         | microcloud3 |
++------------+---------+---------------------+-----------------------------------------------+-----------------+-----------+-------------+
+| u5         | RUNNING | 10.37.77.5 (eth0)   | fd42:bd9:f08f:124:216:3eff:fee4:bdf3 (eth0)   | CONTAINER       | 0         | microcloud1 |
++------------+---------+---------------------+-----------------------------------------------+-----------------+-----------+-------------+
+| vm1        | RUNNING | 10.37.77.4 (enp5s0) | fd42:bd9:f08f:124:216:3eff:fe6e:c012 (enp5s0) | VIRTUAL-MACHINE | 0         | microcloud2 |
++------------+---------+---------------------+-----------------------------------------------+-----------------+-----------+-------------+
+netlabadmin@microcloud1:~$ lxc exec u5 bash
+root@u5:~# tail -f /var/log/cloud-init-output.log 
+Get:45 http://security.ubuntu.com/ubuntu noble-security/multiverse Translation-en [2808 B]
+Get:46 http://archive.ubuntu.com/ubuntu noble-backports/universe amd64 c-n-f Metadata [1104 B]
+Get:47 http://security.ubuntu.com/ubuntu noble-security/multiverse amd64 Components [212 B]
+Get:48 http://archive.ubuntu.com/ubuntu noble-backports/restricted amd64 Components [216 B]
+Get:49 http://archive.ubuntu.com/ubuntu noble-backports/restricted amd64 c-n-f Metadata [116 B]
+Get:50 http://security.ubuntu.com/ubuntu noble-security/multiverse amd64 c-n-f Metadata [344 B]
+Get:51 http://archive.ubuntu.com/ubuntu noble-backports/multiverse amd64 Components [212 B]
+Get:52 http://archive.ubuntu.com/ubuntu noble-backports/multiverse amd64 c-n-f Metadata [116 B]
+Fetched 30.4 MB in 4s (7367 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following additional packages will be installed:
+  nginx-common
+Suggested packages:
+  fcgiwrap nginx-doc ssl-cert
+The following NEW packages will be installed:
+  nginx nginx-common
+0 upgraded, 2 newly installed, 0 to remove and 17 not upgraded.
+Need to get 552 kB of archives.
+After this operation, 1596 kB of additional disk space will be used.
+Get:1 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 nginx-common all 1.24.0-2ubuntu7.1 [31.2 kB]
+Get:2 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 nginx amd64 1.24.0-2ubuntu7.1 [521 kB]
+Preconfiguring packages ...
+Fetched 552 kB in 0s (3372 kB/s)
+Selecting previously unselected package nginx-common.
+(Reading database ... 34495 files and directories currently installed.)
+Preparing to unpack .../nginx-common_1.24.0-2ubuntu7.1_all.deb ...
+Unpacking nginx-common (1.24.0-2ubuntu7.1) ...
+Selecting previously unselected package nginx.
+Preparing to unpack .../nginx_1.24.0-2ubuntu7.1_amd64.deb ...
+Unpacking nginx (1.24.0-2ubuntu7.1) ...
+Setting up nginx (1.24.0-2ubuntu7.1) ...
+Setting up nginx-common (1.24.0-2ubuntu7.1) ...
+Created symlink /etc/systemd/system/multi-user.target.wants/nginx.service → /usr/lib/systemd/system/nginx.service.
+Processing triggers for ufw (0.36.2-6) ...
+Processing triggers for man-db (2.12.0-4build2) ...
+
+No services need to be restarted.
+
+No containers need to be restarted.
+
+No user sessions are running outdated binaries.
+
+No VM guests are running outdated hypervisor (qemu) binaries on this host.
+Cloud-init v. 24.3.1-0ubuntu0~24.04.2 finished at Fri, 25 Oct 2024 19:50:25 +0000. Datasource DataSourceLXD.  Up 46.35 seconds
+^C
+root@u5:~# 
+
