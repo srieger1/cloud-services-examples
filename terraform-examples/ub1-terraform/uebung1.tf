@@ -16,11 +16,16 @@ locals {
   user_name     = "CloudServ${var.group_number}"
   user_password = "<password of your group here, private-cloud is only reachable via vpn>"
   tenant_name   = "CloudServ${var.group_number}"
+  cacert_file   = "./os-trusted-cas"
+  region_name   = "RegionOne"
+
   router_name   = "CloudServ${var.group_number}-router"
+  dns_servers   = [ "10.33.16.100", "8.8.8.8" ]
+
+  pubnet_name   = "ext_net"
+
   image_name    = "ubuntu-22.04-jammy-server-cloud-image-amd64"
   flavor_name   = "m1.small"
-  region_name   = "RegionOne"
-  cacert_file   = "./os-trusted-cas"
 }
 
 # Define OpenStack provider
@@ -105,10 +110,11 @@ resource "openstack_networking_network_v2" "terraform-network-1" {
 }
 
 resource "openstack_networking_subnet_v2" "terraform-subnet-1" {
-  name       = "my-terraform-subnet-1"
-  network_id = openstack_networking_network_v2.terraform-network-1.id
-  cidr       = "192.168.255.0/24"
-  ip_version = 4
+  name            = "my-terraform-subnet-1"
+  network_id      = openstack_networking_network_v2.terraform-network-1.id
+  cidr            = "192.168.255.0/24"
+  ip_version      = 4
+  dns_nameservers = local.dns_servers
 }
 
 data "openstack_networking_router_v2" "router-1" {
@@ -199,49 +205,49 @@ resource "openstack_compute_instance_v2" "terraform-instance-2" {
 # create load balancer
 #
 ###########################################################################
-#resource "openstack_lb_loadbalancer_v2" "lb_1" {
-#  vip_subnet_id = openstack_networking_subnet_v2.terraform-subnet-1.id
-#}
+resource "openstack_lb_loadbalancer_v2" "lb_1" {
+  vip_subnet_id = openstack_networking_subnet_v2.terraform-subnet-1.id
+}
 
-#resource "openstack_lb_listener_v2" "listener_1" {
-#  protocol        = "HTTP"
-#  protocol_port   = 80
-#  loadbalancer_id = openstack_lb_loadbalancer_v2.lb_1.id
-#  connection_limit = 1024
-#}
-#
-#resource "openstack_lb_pool_v2" "pool_1" {
-#  protocol    = "HTTP"
-#  lb_method   = "ROUND_ROBIN"
-#  listener_id = openstack_lb_listener_v2.listener_1.id
-#}
+resource "openstack_lb_listener_v2" "listener_1" {
+  protocol        = "HTTP"
+  protocol_port   = 80
+  loadbalancer_id = openstack_lb_loadbalancer_v2.lb_1.id
+  connection_limit = 1024
+}
 
-#resource "openstack_lb_members_v2" "members_1" {
-#  pool_id = openstack_lb_pool_v2.pool_1.id
-#
-#  member {
-#    address       = openstack_compute_instance_v2.terraform-instance-1.access_ip_v4
-#    protocol_port = 80
-#  }
-#
-#  member {
-#    address       = openstack_compute_instance_v2.terraform-instance-2.access_ip_v4
-#    protocol_port = 80
-#  }
-#}
+resource "openstack_lb_pool_v2" "pool_1" {
+  protocol    = "HTTP"
+  lb_method   = "ROUND_ROBIN"
+  listener_id = openstack_lb_listener_v2.listener_1.id
+}
 
-#resource "openstack_lb_monitor_v2" "monitor_1" {
-#  pool_id        = openstack_lb_pool_v2.pool_1.id
-#  type           = "HTTP"
-#  delay          = 5
-#  timeout        = 5
-#  max_retries    = 3
-#  http_method    = "GET"
-#  url_path       = "/"
-#  expected_codes = 200
-#
-#  depends_on = [openstack_lb_loadbalancer_v2.lb_1, openstack_lb_listener_v2.listener_1, openstack_lb_pool_v2.pool_1, openstack_lb_members_v2.members_1 ]
-#}
+resource "openstack_lb_members_v2" "members_1" {
+  pool_id = openstack_lb_pool_v2.pool_1.id
+
+  member {
+    address       = openstack_compute_instance_v2.terraform-instance-1.access_ip_v4
+    protocol_port = 80
+  }
+
+  member {
+    address       = openstack_compute_instance_v2.terraform-instance-2.access_ip_v4
+    protocol_port = 80
+  }
+}
+
+resource "openstack_lb_monitor_v2" "monitor_1" {
+  pool_id        = openstack_lb_pool_v2.pool_1.id
+  type           = "HTTP"
+  delay          = 5
+  timeout        = 5
+  max_retries    = 3
+  http_method    = "GET"
+  url_path       = "/"
+  expected_codes = 200
+
+  depends_on = [openstack_lb_loadbalancer_v2.lb_1, openstack_lb_listener_v2.listener_1, openstack_lb_pool_v2.pool_1, openstack_lb_members_v2.members_1 ]
+}
 
 
 
@@ -250,11 +256,11 @@ resource "openstack_compute_instance_v2" "terraform-instance-2" {
 # assign floating ip to load balancer
 #
 ###########################################################################
-#resource "openstack_networking_floatingip_v2" "fip_1" {
-#  pool    = "public1"
-#  port_id = openstack_lb_loadbalancer_v2.lb_1.vip_port_id
-#}
+resource "openstack_networking_floatingip_v2" "fip_1" {
+  pool    = local.pubnet_name
+  port_id = openstack_lb_loadbalancer_v2.lb_1.vip_port_id
+}
 
-#output "loadbalancer_vip_addr" {
-#  value = openstack_networking_floatingip_v2.fip_1
-#}
+output "loadbalancer_vip_addr" {
+  value = openstack_networking_floatingip_v2.fip_1
+}
