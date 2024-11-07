@@ -1,0 +1,4 @@
+[submodule "terraform-examples/terraform-openstack-rke2"]
+	path = terraform-examples/terraform-openstack-rke2
+	url = git@github.com:srieger1/terraform-openstack-rke2.git
+	branch = hsfulda-example-2023-10
