@@ -134,8 +134,8 @@ resource "openstack_networking_router_interface_v2" "router_interface_1" {
 #
 ###########################################################################
 
-resource "openstack_compute_instance_v2" "terraform-instance-1" {
-  name              = "my-terraform-instance-1"
+resource "openstack_compute_instance_v2" "terraform-docker-instance-1" {
+  name              = "my-terraform-docker-instance-1"
   image_name        = local.image_name
   flavor_name       = local.flavor_name
   key_pair          = openstack_compute_keypair_v2.terraform-keypair.name
@@ -150,51 +150,31 @@ resource "openstack_compute_instance_v2" "terraform-instance-1" {
   user_data = <<-EOF
     #!/bin/bash
     apt-get update
-    apt-get -y install apache2
-    rm /var/www/html/index.html
-    cat > /var/www/html/index.html << INNEREOF
-    <!DOCTYPE html>
-    <html>
-      <body>
-        <h1>It works!</h1>
-        <p>hostname</p>
-      </body>
-    </html>
-    INNEREOF
-    sed -i "s/hostname/terraform-instance-1/" /var/www/html/index.html
-    sed -i "1s/$/ terraform-instance-1/" /etc/hosts
-  EOF
-}
-
-resource "openstack_compute_instance_v2" "terraform-instance-2" {
-  name            = "my-terraform-instance-2"
-  image_name      = local.image_name
-  flavor_name     = local.flavor_name
-  key_pair        = openstack_compute_keypair_v2.terraform-keypair.name
-  security_groups = [openstack_networking_secgroup_v2.terraform-secgroup.id]
-
-  depends_on = [openstack_networking_subnet_v2.terraform-subnet-1]
-
-  network {
-    uuid = openstack_networking_network_v2.terraform-network-1.id
-  }
-
-  user_data = <<-EOF
-    #!/bin/bash
+    # see: https://docs.docker.com/engine/install/ubuntu/
+    # also running the convenience script from https://get.docker.com/ or
+    # https://github.com/docker/docker-install is possible, but risky
+    apt-get install -y ca-certificates curl
+    # install docker gpg key
+    install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+    chmod a+r /etc/apt/keyrings/docker.asc
+    # add the repository to apt sources:
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+      $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+    tee /etc/apt/sources.list.d/docker.list > /dev/null
     apt-get update
-    apt-get -y install apache2
-    rm /var/www/html/index.html
-    cat > /var/www/html/index.html << INNEREOF
-    <!DOCTYPE html>
-    <html>
-      <body>
-        <h1>It works!</h1>
-        <p>hostname</p>
-      </body>
-    </html>
-    INNEREOF
-    sed -i "s/hostname/terraform-instance-2/" /var/www/html/index.html
-    sed -i "1s/$/ terraform-instance-2/" /etc/hosts
+    # install docker
+    apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    # post install
+    #groupadd docker # already installed by package normally
+    usermod -aG docker ubuntu # add default cloud image user to docker group
+    # autostart docker on reboot
+    systemctl enable docker.service
+    systemctl enable containerd.service
+    # start an example container
+    docker run --restart unless-stopped --name nginx -d -p 80:80 nginx
+    # see, https://hub.docker.com/_/nginx, also for docker-compose example etc.
   EOF
 }
 
@@ -202,63 +182,16 @@ resource "openstack_compute_instance_v2" "terraform-instance-2" {
 
 ###########################################################################
 #
-# create load balancer
+# assign floating ip to instance 
 #
 ###########################################################################
-resource "openstack_lb_loadbalancer_v2" "lb_1" {
-  vip_subnet_id = openstack_networking_subnet_v2.terraform-subnet-1.id
+data "openstack_networking_port_v2" "port-1" {
+  fixed_ip = openstack_compute_instance_v2.terraform-docker-instance-1.access_ip_v4
 }
 
-resource "openstack_lb_listener_v2" "listener_1" {
-  protocol        = "HTTP"
-  protocol_port   = 80
-  loadbalancer_id = openstack_lb_loadbalancer_v2.lb_1.id
-  connection_limit = 1024
-}
-
-resource "openstack_lb_pool_v2" "pool_1" {
-  protocol    = "HTTP"
-  lb_method   = "ROUND_ROBIN"
-  listener_id = openstack_lb_listener_v2.listener_1.id
-}
-
-resource "openstack_lb_members_v2" "members_1" {
-  pool_id = openstack_lb_pool_v2.pool_1.id
-
-  member {
-    address       = openstack_compute_instance_v2.terraform-instance-1.access_ip_v4
-    protocol_port = 80
-  }
-
-  member {
-    address       = openstack_compute_instance_v2.terraform-instance-2.access_ip_v4
-    protocol_port = 80
-  }
-}
-
-resource "openstack_lb_monitor_v2" "monitor_1" {
-  pool_id        = openstack_lb_pool_v2.pool_1.id
-  type           = "HTTP"
-  delay          = 5
-  timeout        = 5
-  max_retries    = 3
-  http_method    = "GET"
-  url_path       = "/"
-  expected_codes = 200
-
-  depends_on = [openstack_lb_loadbalancer_v2.lb_1, openstack_lb_listener_v2.listener_1, openstack_lb_pool_v2.pool_1, openstack_lb_members_v2.members_1 ]
-}
-
-
-
-###########################################################################
-#
-# assign floating ip to load balancer
-#
-###########################################################################
 resource "openstack_networking_floatingip_v2" "fip_1" {
   pool    = local.pubnet_name
-  port_id = openstack_lb_loadbalancer_v2.lb_1.vip_port_id
+  port_id = data.openstack_networking_port_v2.port-1.id
 }
 
 output "loadbalancer_vip_addr" {
