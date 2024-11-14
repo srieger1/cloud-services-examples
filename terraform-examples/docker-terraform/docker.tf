@@ -194,6 +194,6 @@ resource "openstack_networking_floatingip_v2" "fip_1" {
   port_id = data.openstack_networking_port_v2.port-1.id
 }
 
-output "loadbalancer_vip_addr" {
+output "docker_vip_addr" {
   value = openstack_networking_floatingip_v2.fip_1
 }
