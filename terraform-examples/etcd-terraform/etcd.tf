@@ -1,7 +1,8 @@
 # Define CloudServ group number
 variable "group_number" {
   type = string
-  default = "20"
+  #default = "20"
+  default = "17"
 }
 
 ## OpenStack credentials can be used in a more secure way by using
@@ -12,12 +13,12 @@ variable "group_number" {
 
 # Define OpenStack credentials, project config etc.
 locals {
-  auth_url      = "https://private-cloud.informatik.hs-fulda.de:5000/v3"
-  user_name     = "CloudServ${var.group_number}"
-  user_password = "<password of your group here, private-cloud is only reachable via vpn>"
-  tenant_name   = "CloudServ${var.group_number}"
+  #auth_url      = "https://private-cloud.informatik.hs-fulda.de:5000/v3"
+  #user_name     = "CloudServ${var.group_number}"
+  #user_password = "<password of your group here, private-cloud is only reachable via vpn>"
+  #tenant_name   = "CloudServ${var.group_number}"
   cacert_file   = "./os-trusted-cas"
-  region_name   = "RegionOne"
+  #region_name   = "RegionOne"
 
   router_name   = "CloudServ${var.group_number}-router"
   dns_servers   = [ "10.33.16.100", "8.8.8.8" ]
@@ -41,11 +42,11 @@ required_version = ">= 0.14.0"
 
 # Configure the OpenStack Provider
 provider "openstack" {
-  user_name   = local.user_name
-  tenant_name = local.tenant_name
-  password    = local.user_password
-  auth_url    = local.auth_url
-  region      = local.region_name
+  #user_name   = local.user_name
+  #tenant_name = local.tenant_name
+  #password    = local.user_password
+  #auth_url    = local.auth_url
+  #region      = local.region_name
   cacert_file = local.cacert_file
   #use_octavia = true # only needed for openstack provider <2.0
 }

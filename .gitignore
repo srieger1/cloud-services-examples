@@ -1,3 +1,5 @@
 terraform.tf*
 .terraform
 .terraform.lock.hcl
+clouds.yaml
+**/clouds.yaml
