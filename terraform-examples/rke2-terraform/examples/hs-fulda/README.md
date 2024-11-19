@@ -1,10 +1,10 @@
 # HS-Fulda NetLab OpenStack RKE2 Example
 
-This guide outlines the steps to set up an RKE2 Kubernetes cluster on OpenStack using Terraform, based on [this repository](https://github.com/zifeo/terraform-openstack-rke2).
+This guide outlines the steps to set up an RKE2 Kubernetes cluster on OpenStack using Terraform, based on [this repository](https://github.com/zifeo/terraform-openstack-rke2). 🚀
 
 ## Attention
 
-This example implements the deactivation of the validation of all TLS certificates by default. **Never** use this code in a production environment.
+⚠️ This example uses provided CA certificates by default. Do not use this code in a production environment. ⚠️
 
 ## Usage
 

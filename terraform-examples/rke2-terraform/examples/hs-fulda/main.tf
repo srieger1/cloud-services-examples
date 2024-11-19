@@ -1,7 +1,7 @@
 ###########################################################
 # 
 # Author: Lucas Immanuel Nickel, Sebastian Rieger
-# Date: May 23, 2024
+# Date: November 16, 2024
 # Remark: This code is not production ready as it disables certificate checks by default
 # and sets kubeconfig file access to 644 instead of default 600
 #
@@ -18,13 +18,14 @@ locals {
     #
     ###########################################################
 
-    insecure         = true
-    auth_url         = "https://10.32.4.182:5000/v3"
-    object_store_url = "private-cloud2.informatik.hs-fulda.de:6780"
+    #insecure         = true
+    auth_url         = "https://private-cloud.informatik.hs-fulda.de:5000/v3"
+    object_store_url = "https://10.32.5.250:443"
     region           = "RegionOne"
+    cacert_file      = "./os-trusted-cas"
 
     cluster_name     = "${var.project}-k8s"
-    image_name       = "ubuntu-22.04-jammy-x86_64"
+    image_name       = "ubuntu-22.04-jammy-server-cloud-image-amd64"
     flavor_name      = "m1.medium"
     system_user      = "ubuntu"
     floating_ip_pool = "ext_net"
@@ -32,31 +33,39 @@ locals {
     #ssh_pubkey_file  = "~/.ssh/id_ed25519.pub"
     dns_server       = "10.33.16.100"
     manifests_folder = "./hsfd-manifests"
-    rke2_version     = "v1.28.4+rke2r1"
+    rke2_version     = "v1.30.3+rke2r1"
 
     ###########################################################
 }
 
 module "rke2" {
+  # source = "zifeo/rke2/openstack"
+  # version = ""
   source = "./../.."
-  insecure            = local.insecure
+  #insecure            = local.insecure
+
+  # must be true for single server cluster or
+  # only on the first run for high-availability cluster
   bootstrap           = true
   name                = local.cluster_name
   ssh_authorized_keys = [local.ssh_pubkey_file]
   floating_pool       = local.floating_ip_pool
-  rules_ssh_cidr      = "0.0.0.0/0"
-  rules_k8s_cidr      = "0.0.0.0/0"
+  # should be restricted to secure bastion
+  rules_ssh_cidr      = [ "0.0.0.0/0" ]
+  rules_k8s_cidr      = [ "0.0.0.0/0" ]
+  # auto load manifest from a folder (https://docs.rke2.io/advanced#auto-deploying-manifests)
   manifests_folder    = local.manifests_folder
 
   servers = [{
-    name = "server"
+    name = "controller"
     flavor_name = local.flavor_name
     image_name  = local.image_name
     system_user = local.system_user
-    boot_volume_size = 8
+    boot_volume_size = 6
     rke2_version     = local.rke2_version
     rke2_volume_size = 8
     rke2_volume_device = "/dev/vdb"
+    # https://docs.rke2.io/install/install_options/server_config/
     rke2_config = <<EOF
 # https://docs.rke2.io/install/install_options/server_config/
 write-kubeconfig-mode: "0644"
@@ -65,27 +74,23 @@ EOF
 
   agents = [
     {
-      name        = "pool"
-      #nodes_count = 1
-      nodes_count = 3
+      name        = "worker"
+      nodes_count = 1
+      #nodes_count = 3
       flavor_name = local.flavor_name
       image_name  = local.image_name
+      # if you want a fixed version
+      # image_uuid = "..."
       system_user = local.system_user
-      boot_volume_size = 8
+      boot_volume_size = 6
       rke2_version     = local.rke2_version
       rke2_volume_size = 8
       rke2_volume_device = "/dev/vdb"
     }
   ]
 
-  dns_nameservers4      = [local.dns_server]
-  ff_autoremove_agent   = "30s"
-  ff_write_kubeconfig   = true
-  ff_native_backup      = true
-  ff_wait_ready         = true
-
-  identity_endpoint     = local.auth_url
-  object_store_endpoint = local.object_store_url
+  backup_schedule  = "0 6 1 * *" # once a month
+  backup_retention = 20
 
   kube_apiserver_resources = {
     requests = {
@@ -114,9 +119,19 @@ EOF
       memory = "128M"
     }
   }
+  vip_interface       = "ens2"
+  dns_nameservers4    = [local.dns_server]
+  # enable automatically agent removal of the cluster (wait max for 30s)
+  ff_autoremove_agent = "30s"
+  # rewrite kubeconfig
+  ff_write_kubeconfig = true
+  # deploy etcd backup
+  ff_native_backup    = true
+  # wait for the cluster to be ready when deploying
+  ff_wait_ready       = true
 
-  backup_schedule = "0 6 1 * *"
-  backup_retention = 20
+  identity_endpoint     = local.auth_url
+  object_store_endpoint = local.object_store_url
 }
 
 variable "project" {
@@ -136,12 +151,15 @@ output "floating_ip" {
 }
 
 provider "openstack" {
-  insecure    = local.insecure
+  # change to ca_path
+  #insecure    = local.insecure
   tenant_name = var.project
   user_name   = var.username
+  # checkov:skip=CKV_OPENSTACK_1
   password    = var.password
   auth_url    = local.auth_url
   region      = local.region
+  cacert_file = local.cacert_file
 }
 
 terraform {
