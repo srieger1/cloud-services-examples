@@ -6,6 +6,8 @@
 # docker build . -t ubuntu-htop
 # docker tag
 
+# .dockerignore file in the directory can be used to control files that are included in the build context (and will therefore not be included in the image)
+
 ### Listing and managing images ###
 # docker image ls
 # docker image rm
