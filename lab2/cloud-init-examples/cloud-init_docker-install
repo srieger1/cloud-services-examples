@@ -1,0 +1,27 @@
+#!/bin/bash
+apt-get update
+# see: https://docs.docker.com/engine/install/ubuntu/
+# also running the convenience script from https://get.docker.com/ or
+# https://github.com/docker/docker-install is possible, but risky
+apt-get install -y ca-certificates curl
+# install docker gpg key
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+chmod a+r /etc/apt/keyrings/docker.asc
+# add the repository to apt sources:
+echo \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+    $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+tee /etc/apt/sources.list.d/docker.list > /dev/null
+apt-get update
+# install docker
+apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+# post install
+#groupadd docker # already installed by package normally
+usermod -aG docker ubuntu # add default cloud image user to docker group
+# autostart docker on reboot
+systemctl enable docker.service
+systemctl enable containerd.service
+# start an example container
+docker run --restart unless-stopped --name nginx -d -p 80:80 nginx
+# see, https://hub.docker.com/_/nginx, also for docker-compose example etc.
