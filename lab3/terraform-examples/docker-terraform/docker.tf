@@ -1,7 +1,7 @@
 # Define CloudServ group number
 variable "group_number" {
   type = string
-  default = "20"
+  default = "17"
 }
 
 ## OpenStack credentials can be used in a more secure way by using
@@ -14,7 +14,7 @@ variable "group_number" {
 locals {
   auth_url      = "https://private-cloud.informatik.hs-fulda.de:5000/v3"
   user_name     = "CloudServ${var.group_number}"
-  user_password = "<password of your group here, private-cloud is only reachable via vpn>"
+  user_password = "uptodate"
   tenant_name   = "CloudServ${var.group_number}"
   cacert_file   = "./os-trusted-cas"
   region_name   = "RegionOne"
@@ -30,12 +30,28 @@ locals {
 
 # Define OpenStack provider
 terraform {
-required_version = ">= 0.14.0"
+  required_version = ">= 0.14.0"
   required_providers {
     openstack = {
       source  = "terraform-provider-openstack/openstack"
       version = ">= 1.46.0"
     }
+  }
+  backend "s3" {
+    skip_region_validation      = true
+    skip_credentials_validation = true
+    skip_metadata_api_check     = true
+    skip_requesting_account_id  = true
+    use_path_style              = true
+    bucket             = "terraform-state"
+    key                = "terraform.tfstate"
+    region             = "eu-central-1"
+    endpoints = {
+      s3 = "https://10.32.4.25:443/"
+    }
+    #container         = "terraform-state"
+    #archive_container = "terraform-state-archive"
+    #cloud             = "hsfulda-openstack" # using a context form a clouds.yaml file
   }
 }
 
