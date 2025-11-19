@@ -35,7 +35,7 @@ required_version = ">= 0.14.0"
   required_providers {
     openstack = {
       source  = "terraform-provider-openstack/openstack"
-      version = ">= 1.46.0"
+      version = ">= 3.0.0"
     }
   }
 }
@@ -48,7 +48,6 @@ provider "openstack" {
   auth_url    = local.auth_url
   region      = local.region_name
   cacert_file = local.cacert_file
-  use_octavia = true
 }
 
 
@@ -131,8 +130,26 @@ data "openstack_networking_network_v2" "fip_network" {
   name = local.pubnet_name
 }
 
+###########################################################################
+#
+# create floating IP and associate to port
+#
+###########################################################################
+
+resource "openstack_networking_port_v2" "k3s_server_port" {
+  name           = "k3s-server-0-port"
+  network_id     = openstack_networking_network_v2.terraform-k3s-network-1.id
+  admin_state_up = "true"
+  security_group_ids = [openstack_networking_secgroup_v2.terraform-k3s-secgroup.id]
+
+  fixed_ip {
+    subnet_id = openstack_networking_subnet_v2.terraform-k3s-subnet-1.id
+  }
+}
+
 resource "openstack_networking_floatingip_v2" "fip_1" {
-  pool = local.pubnet_name
+  pool    = local.pubnet_name
+  port_id = openstack_networking_port_v2.k3s_server_port.id
 }
 
 ###########################################################################
@@ -151,7 +168,7 @@ resource "openstack_compute_instance_v2" "k3s-server-0" {
   depends_on = [openstack_networking_subnet_v2.terraform-k3s-subnet-1]
 
   network {
-    uuid = openstack_networking_network_v2.terraform-k3s-network-1.id
+    port = openstack_networking_port_v2.k3s_server_port.id
   }
 
   user_data = <<-EOF
@@ -227,11 +244,7 @@ resource "openstack_compute_instance_v2" "k3s-agent" {
 # assign floating ip to server instance
 #
 ###########################################################################
-resource "openstack_compute_floatingip_associate_v2" "fip_1" {
-  floating_ip = "${openstack_networking_floatingip_v2.fip_1.address}"
-  instance_id = "${openstack_compute_instance_v2.k3s-server-0.id}"
-}
 
 output "loadbalancer_vip_addr" {
-  value = openstack_networking_floatingip_v2.fip_1
+  value = openstack_networking_floatingip_v2.fip_1.address
 }
