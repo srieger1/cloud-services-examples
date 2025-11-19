@@ -13,16 +13,20 @@ variable "group_number" {
 # Define OpenStack credentials, project config etc.
 locals {
   auth_url      = "https://private-cloud.informatik.hs-fulda.de:5000/v3"
-  user_name     = "IntServ${var.group_number}"
+  user_name     = "CloudServ${var.group_number}"
   user_password = "<INSERT YOUR PASSWORD HERE>"
-  tenant_name   = "IntServ${var.group_number}"
-  #network_name  = "IntServ${var.group_number}-net"
-  router_name   = "IntServ${var.group_number}-router"
-  image_name    = "Ubuntu 20.04 - Focal Fossa - 64-bit - Cloud Based Image"
+  tenant_name   = "CloudServ${var.group_number}"
+  cacert_file   = "./os-trusted-cas"
+  region_name   = "RegionOne"
+
+  router_name   = "CloudServ${var.group_number}-router"
+  dns_servers   = [ "10.33.16.100", "8.8.8.8" ]
+
+  pubnet_name   = "ext_net"
+  image_name    = "ubuntu-22.04-jammy-server-cloud-image-amd64"
+
   server_flavor_name  = "m1.medium"
   agent_flavor_name   = "m1.large"
-  region_name   = "RegionOne"
-  floating_net  = "public1"
 }
 
 # Define OpenStack provider
@@ -43,6 +47,7 @@ provider "openstack" {
   password    = local.user_password
   auth_url    = local.auth_url
   region      = local.region_name
+  cacert_file = local.cacert_file
   use_octavia = true
 }
 
@@ -57,7 +62,7 @@ provider "openstack" {
 # import keypair, if public_key is not specified, create new keypair to use
 resource "openstack_compute_keypair_v2" "terraform-k3s-keypair" {
   name       = "my-terraform-k3s-pubkey"
-  public_key = file("~/.ssh/chrisLaptop.pub")
+#  public_key = file("~/.ssh/chrisLaptop.pub")
 }
 
 
@@ -110,7 +115,7 @@ resource "openstack_networking_subnet_v2" "terraform-k3s-subnet-1" {
   network_id      = openstack_networking_network_v2.terraform-k3s-network-1.id
   cidr            = "192.168.255.0/24"
   ip_version      = 4
-  dns_nameservers = ["192.168.76.253"]
+  dns_nameservers = local.dns_servers
 }
 
 data "openstack_networking_router_v2" "router-1" {
@@ -123,11 +128,11 @@ resource "openstack_networking_router_interface_v2" "router_interface_1" {
 }
 
 data "openstack_networking_network_v2" "fip_network" {
-  name = local.floating_net
+  name = local.pubnet_name
 }
 
 resource "openstack_networking_floatingip_v2" "fip_1" {
-  pool = local.floating_net
+  pool = local.pubnet_name
 }
 
 ###########################################################################
