@@ -1,8 +1,8 @@
 # Lab 4 - Orchestration with Kubernetes (k8s)
 
 ## Task 1: Install Kubernetes in our OpenStack private cloud
-* https://github.com/srieger1/terraform-openstack-rke2/tree/hsfulda-example/examples/hs-fulda
-* configure main.tf and take a look at the `module` directive. See it's source in the main directory of the repo https://github.com/srieger1/terraform-openstack-rke2/tree/hsfulda-example.
+* clone the following repo and use hs-fulda example from https://github.com/srieger1/terraform-openstack-rke2/tree/hsfulda-example/examples/hs-fulda to deploy RKE2 in our OpenStack, the README contains instructions, esp. necessary for windows to get the k8s credentials (kubeconfig, rke2.yaml)
+* configure main.tf and take a look at the `module` directive. See its source in the main directory of the repo https://github.com/srieger1/terraform-openstack-rke2/tree/hsfulda-example.
 
 > [!TIP]
 > * How can terraform modules be used? What is the role of the tf files in the main folder of the repo? What is the role of the tf in the node folder? What role do the manifests and patches folders play? 
