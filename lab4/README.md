@@ -17,6 +17,28 @@
 > * Discuss the pros and cons of Kubernetes and how it compares and integrates with cloud providers like OpenStack and container ecosystems like docker.
 > * Why is it called container orchestration? Why is Kubernetes so popular in the recent years? Why is it related to cloud-native?
 
+> [!TIP]
+> When using Windows in the lab, the easiest method to access rke2 and k8s is to login to the controller and use it as a deployment host.
+> `ssh ubuntu@<floating-ip>` displayed in the output of terraform as soon as it complains that it does not find rsync and yq on Windows.
+> Afterwards you can use the following commands on the controller to access and use k8s or deploy the wordpress example:
+
+```bash
+# make kubeconfig / credentials readable for user
+# set env var to allow kubectl, helm, k9s etc. to find and access rke2 k8s
+chmod 666 /etc/rancher/rke2/rke2.yaml
+export KUBECONFIG=/etc/rancher/rke2/rke2.yaml
+
+# k9s installation (https://k9scli.io/)
+https://github.com/derailed/k9s/releases/download/v0.50.16/k9s_Linux_amd64.tar.gz
+./k9s
+# helm installation (https://helm.sh/de/docs/intro/install)
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | bash
+helm
+helm install my-release oci://registry-1.docker.io/bitnamicharts/wordpress
+```
+
+See also the README for the hsfulda example in https://github.com/srieger1/terraform-openstack-rke2/blob/hsfulda-example/examples/hs-fulda/README.md
+
 ---
 
 Break
@@ -24,7 +46,7 @@ Break
 ---
 
 ## Task 3:
-* deploy wordpress as a sample workload to Kubernetes using helm (see the README for hs-fulda example or https://artifacthub.io/packages/helm/bitnami/wordpress
+* deploy wordpress as a sample workload to Kubernetes using helm (see the [README](https://github.com/srieger1/terraform-openstack-rke2/blob/hsfulda-example/examples/hs-fulda/README.md) for hs-fulda example or https://artifacthub.io/packages/helm/bitnami/wordpress
 * watch the storage volumes and load balancer being created in OpenStack, e.g., using the web interface (horizon)
 * access wordpress and take a look at the options for the helm chart deployment
 * kill one of the wordpress pods and see it getting recreated
@@ -48,5 +70,5 @@ Break
 > * What is the role of `deployment.yaml`, `svc.yaml`, `_helpers.tpl` and `NOTES.txt` in the templates folder?
 > * What are the pros and cons of application deployments, e.g., using helm in k8s?
 
-Task 5:
+## Task 5:
 * Kubernetes resources deep-dive: take a look at logs of pods, enter a shell in a pod/container. Take a look at svc. Try to see and scale a ReplicaSet for a deployment and its pods. Describe and edit a pod and deployment.
