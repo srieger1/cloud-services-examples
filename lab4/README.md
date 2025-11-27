@@ -24,14 +24,14 @@ Break
 ---
 
 ## Task 3:
-* deploy wordpress as a sample workload to Kubernetes using helm (see the README for hs-fulda example orhttps://artifacthub.io/packages/helm/bitnami/wordpress
-* see the storage volumes and load balancer being created in OpenStack
-* access wordpress and take a look at the options for the helm chart. 
-* kill one of the wordpress pods and see it getting recreated.
-* undeploy wordpress and make sure that storage volumes and load balancer is deleted in OpenStack
+* deploy wordpress as a sample workload to Kubernetes using helm (see the README for hs-fulda example or https://artifacthub.io/packages/helm/bitnami/wordpress
+* watch the storage volumes and load balancer being created in OpenStack, e.g., using the web interface (horizon)
+* access wordpress and take a look at the options for the helm chart deployment
+* kill one of the wordpress pods and see it getting recreated
+* undeploy wordpress and make sure that storage volumes and load balancer are deleted in OpenStack
 
 > [!CAUTION]
-> You must uninstall the helm chart first to delete load balancer and storage volumes in OpenStack
+> You must uninstall the helm chart to delete the load balancer and storage volumes for wordpress in OpenStack to be deleted
 > before destroying the cluster! volumes are even retained by default and you have to delete them manually - that's intentionally the default
 
 * destroy the cluster using `terraform destroy`
