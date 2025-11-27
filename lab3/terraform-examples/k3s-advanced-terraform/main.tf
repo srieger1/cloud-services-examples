@@ -133,6 +133,8 @@ data "openstack_networking_network_v2" "fip_network" {
 ###########################################################################
 #
 # create floating IP and associate to port
+# this floating IP is directly assigned to the server instance for convenience
+# you can also create a load balancer and assign a floating IP to it
 #
 ###########################################################################
 
