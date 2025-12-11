@@ -1,0 +1,28 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: kube-prometheus-stack 
+  namespace: kube-system
+
+# see, e.g., https://docs.k3s.io/add-ons/helm
+
+spec:
+  chart: kube-prometheus-stack
+  repo: https://prometheus-community.github.io/helm-charts
+  version: 80.2.0
+  targetNamespace: monitoring
+  createNamespace: true
+  valuesContent: |-
+    grafana:
+      enabled: true
+      service:
+        type: LoadBalancer
+    prometheus:
+      prometheusSpec:
+        retention: 30d
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              resources:
+                requests:
+                  storage: 10Gi

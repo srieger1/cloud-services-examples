@@ -1,0 +1,13 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: wordpress 
+  namespace: kube-system
+
+# see, e.g., https://docs.k3s.io/add-ons/helm
+
+spec:
+  chart: oci://registry-1.docker.io/bitnamicharts/wordpress
+  version: 28.0.2 
+  targetNamespace: app
+  createNamespace: true
