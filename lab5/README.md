@@ -15,7 +15,7 @@
 * access and configure ArgoCD as described in the argocd-setup folder https://github.com/faizananwar532/hsfulda-argocd-demo/tree/main/argocd-setup
 
 > [!IMPORTANT]
-> * as discussed in the lab on 4.12.2025, bitnami images previously used in the hsfulda-argocd-demo were removed from the registry by broadcom and are not publically available anymore!
+> * as discussed in the lab on 4.12.2025, Bitnami images previously used in the hsfulda-argocd-demo were removed from the registry by Broadcom and are not publically available anymore!
 > * as a fix thankfully some students provide a new repo that uses other freely available container images: https://github.com/7reax/hsfulda-argocd-demo/tree/main
 > * another option that a group of students used to fix the issue is to use the Argo CD quick start demos and deployed the guestbook example https://github.com/argoproj/argocd-example-apps/tree/master/guestbook as also described in https://argo-cd.readthedocs.io/en/stable/getting_started/
 
