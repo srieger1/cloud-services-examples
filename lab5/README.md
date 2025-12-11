@@ -10,8 +10,8 @@
 ## Task 2:
 * take a look at the helm chart provided in the `calendar-chart` directory.
 
-## Taks 3:
-* install Argo CD in your RKE2 k8s cluster as desribed in the main repo https://github.com/faizananwar532/hsfulda-argocd-demo/blob/main/README.md.
+## Task 3:
+* install Argo CD in your RKE2 k8s cluster as described in the main repo https://github.com/faizananwar532/hsfulda-argocd-demo/blob/main/README.md.
 * access and configure ArgoCD as described in the argocd-setup folder https://github.com/faizananwar532/hsfulda-argocd-demo/tree/main/argocd-setup
 
 > [!IMPORTANT]
