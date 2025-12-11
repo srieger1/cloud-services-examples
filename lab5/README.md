@@ -14,6 +14,11 @@
 * install Argo CD in your RKE2 k8s cluster as desribed in the main repo https://github.com/faizananwar532/hsfulda-argocd-demo/blob/main/README.md.
 * access and configure ArgoCD as described in the argocd-setup folder https://github.com/faizananwar532/hsfulda-argocd-demo/tree/main/argocd-setup
 
+> [!IMPORTANT]
+> * as discussed in the lab on 4.12.2025, bitnami images previously used in the hsfulda-argocd-demo were removed from the registry by broadcom and are not publically available anymore!
+> * as a fix thankfully some students provide a new repo that uses other freely available container images: https://github.com/7reax/hsfulda-argocd-demo/tree/main
+> * another option that a group of students used to fix the issue is to use the Argo CD quick start demos and deployed the guestbook example https://github.com/argoproj/argocd-example-apps/tree/master/guestbook as also described in https://argo-cd.readthedocs.io/en/stable/getting_started/
+
 > [!TIP]
 > * What are the benefits of GitOps using CI/CD tools like Argo CD or Flux CD?
 > * Discuss the pros and cons of Kubernetes for CI/CD like Argo CD or Flux CD
