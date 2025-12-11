@@ -4,7 +4,7 @@
 * take a look at the example provided in this lab folder, especially take a look at the additional automatic helm chart installations monitoring.yaml, logging.yaml and wordpress.yaml in https://github.com/srieger1/cloud-services-examples/tree/main/lab6/hsfulda-example-monitoring/manifests
 
 > [!TIP]
-> * How can the automatic helm chart installation in rke2 (see also, e.g., https://docs.k3s.io/add-ons/helm) be used to deploy also the CI/CD part or other applications?
+> How can the automatic helm chart installation in rke2 (see also, e.g., https://docs.k3s.io/add-ons/helm) be used to deploy also the CI/CD part or other applications?
 
 ## Task 2:
 * deploy the additional manifests to your cluster or spin up a new cluster using the provided terraform files for the lab.
