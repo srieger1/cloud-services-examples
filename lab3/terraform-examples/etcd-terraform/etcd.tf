@@ -17,7 +17,7 @@ locals {
   #user_name     = "CloudServ${var.group_number}"
   #user_password = "<password of your group here, private-cloud is only reachable via vpn>"
   #tenant_name   = "CloudServ${var.group_number}"
-  cacert_file   = "./os-trusted-cas"
+  cacert_file   = "../../../os-trusted-cas"
   #region_name   = "RegionOne"
 
   router_name   = "CloudServ${var.group_number}-router"

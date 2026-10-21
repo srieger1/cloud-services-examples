@@ -16,7 +16,7 @@ locals {
   user_name     = "CloudServ${var.group_number}"
   user_password = "<insert your password here>"
   tenant_name   = "CloudServ${var.group_number}"
-  cacert_file   = "./os-trusted-cas"
+  cacert_file   = "../../../os-trusted-cas"
   region_name   = "RegionOne"
 
   router_name   = "CloudServ${var.group_number}-router"

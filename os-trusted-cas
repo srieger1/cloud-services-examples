@@ -1,0 +1,78 @@
+# Subject: CN = Vault Root Certificate Authority (charm-pki-local)
+#
+# current charmed os vault cert from os-deploy01: 
+# ssh os-deploy01 cat /home/cloud/snap/openstackclients/common/root-ca.crt
+#
+# while openssl x509 -noout -text; do :; done < os-trusted-cas | grep -E 'Subject:|Issuer:|Before|After'
+#
+##############################################################################
+#
+#        Issuer: CN=Vault Root Certificate Authority (charm-pki-local)
+#            Not Before: Oct 12 08:55:31 2026 GMT
+#            Not After : Oct  9 07:56:01 2036 GMT
+#        Subject: CN=Vault Root Certificate Authority (charm-pki-local)
+-----BEGIN CERTIFICATE-----
+MIIDazCCAlOgAwIBAgIUFj8FP+/ymddp1jm7zEd/ChYppFQwDQYJKoZIhvcNAQEL
+BQAwPTE7MDkGA1UEAxMyVmF1bHQgUm9vdCBDZXJ0aWZpY2F0ZSBBdXRob3JpdHkg
+KGNoYXJtLXBraS1sb2NhbCkwHhcNMjYxMDEyMDg1NTMxWhcNMzYxMDA5MDc1NjAx
+WjA9MTswOQYDVQQDEzJWYXVsdCBSb290IENlcnRpZmljYXRlIEF1dGhvcml0eSAo
+Y2hhcm0tcGtpLWxvY2FsKTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEB
+AOTONCIExw3YQQyYghZwREu4RVpfbat9Zto8lxC+NFqJqgPQaRkmy5rFwC6NB3Ts
+EKL/2UAcPFI6aJhbzBQ43kCpOcKNij+ugniXqCH9hYjmoNhLmlBUAFiis8IxVQAY
+zLm20r9ziqlAQW08V0RVGmjd8DoGMoUBeeHl8cWH839No0heFQhkqHIEoRloSzDG
+ukVddUNcFAKovLj3im8Z2usHkcPqlM7z1aY7uanc27zGFapKuQGKQJ80wlZ8zd3U
+NmvgP53Ja0UrFwqgpO6HSKAALIpAQwhXSZiayY7yPWie9TnJ8Ui5HToQ5fnFgUBv
+M81ohfoT3B4cyrU5HY1RrScCAwEAAaNjMGEwDgYDVR0PAQH/BAQDAgEGMA8GA1Ud
+EwEB/wQFMAMBAf8wHQYDVR0OBBYEFAAzYTbMC9NEMBFajUM3VSa5Xf4SMB8GA1Ud
+IwQYMBaAFAAzYTbMC9NEMBFajUM3VSa5Xf4SMA0GCSqGSIb3DQEBCwUAA4IBAQBg
+4KOigwjdkqUnjgkMi29KvEe3nbFE58ByV4rO5k3tLR3/f0ir9u/UQmvsyUiajsRa
+MmAVui4ojkoOO9t82MFDkZJXYfC4nwnmu90pexa/JAtK5UBJmR6ULBmUDOB12XOV
+PU8Ywlka/oDSo6dcccQOyZX4HjPLOCWzOCCik++1APG4SdV0Kj5qWhKm/EAAA5DC
+bTti7iEOEkc9j7S/UEKvzkjHXSUhmI9QCfbW8+BMinHy4mmbW840kqE0HavUs9QH
+UBpCPKkIvcOBCMkmdBRXmhIgWn49y/3C4dgiacIQZDExCA7tpfpGNnE99iaRFWWQ
+7OmbhhU0ZBnEU8b2zqKc
+-----END CERTIFICATE-----
+#        Issuer: C=GR, L=Athens, O=Hellenic Academic and Research Institutions Cert. Authority, CN=Hellenic Academic and Research Institutions RootCA 2015
+#            Not Before: Sep  2 07:41:55 2021 GMT
+#            Not After : Aug 31 07:41:54 2029 GMT
+#        Subject: C=GR, O=Hellenic Academic and Research Institutions CA, CN=HARICA TLS RSA Root CA 2021
+-----BEGIN CERTIFICATE-----
+MIIGwDCCBKigAwIBAgIQKmCG1NTeRcleS5j7vy+/JjANBgkqhkiG9w0BAQsFADCB
+pjELMAkGA1UEBhMCR1IxDzANBgNVBAcTBkF0aGVuczFEMEIGA1UEChM7SGVsbGVu
+aWMgQWNhZGVtaWMgYW5kIFJlc2VhcmNoIEluc3RpdHV0aW9ucyBDZXJ0LiBBdXRo
+b3JpdHkxQDA+BgNVBAMTN0hlbGxlbmljIEFjYWRlbWljIGFuZCBSZXNlYXJjaCBJ
+bnN0aXR1dGlvbnMgUm9vdENBIDIwMTUwHhcNMjEwOTAyMDc0MTU1WhcNMjkwODMx
+MDc0MTU0WjBsMQswCQYDVQQGEwJHUjE3MDUGA1UECgwuSGVsbGVuaWMgQWNhZGVt
+aWMgYW5kIFJlc2VhcmNoIEluc3RpdHV0aW9ucyBDQTEkMCIGA1UEAwwbSEFSSUNB
+IFRMUyBSU0EgUm9vdCBDQSAyMDIxMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIIC
+CgKCAgEAi8Lnr2WbBWeWyQ0kudAOZPzO4iQYLIR/d1HLBBE2uF7taXGnnuQlCZdn
+wUfCz5EWNmI9OAThUYL/rNK0ad0u7BGjRe5raztMv4yNpB6dEbnpOPl6DgyY4iMd
+0U5j1Oe4QUT7a69r2h/TxZGIW6SJktGB5ow5WKDWaUOprZhSWG7bCvtrz2j646Re
+OkVzmAfqXwJy3gyls5+uqR23HbP8ilnnbnJlrfUwlCMH84IWSzWYnFO7L8rkWtnH
+jR38mJn7LKSCa/AqH44LX3FcXK5CeymJgcsDo5nKiJ4LQAlBM9vmWHr9rplwwFoP
+1hOGcS92afyQ3dstbtHym/Uaa55vFYx68EsooCI4gCRsNqQ78jCR83gTz8E/Navx
+HREjtUMingGStxgC5RHRgtsVAMxhN8EqfJrh0LqzUEbugqydMfj7I+IDAEhwowkm
+eRVTYPM4XK046oEAYxS5M17dC9ugRQcaMwn4TbSnAqZp9MJZBYhlhVauS8vg3jx9
+LRrI6fsfo2FK1ioTrXdMGhibkQ9Y2AZUxZf4qj8giqaFpnf2pvwc4u5ulDMqg1CE
+CuVPhvhQRXgAgetbaOMmjcx7XFH0FCxAvhpgHXpyYR0fYy2Iqs6iRZAI/Gu+s1Aq
+Wv2oSBhG1pBAkpAKhF5oMfjr7Q3THcZ9mRhVVidlLo1FxSTszuMCAwEAAaOCASEw
+ggEdMA8GA1UdEwEB/wQFMAMBAf8wHwYDVR0jBBgwFoAUcRVnyMjJvXVdctA4GGqd
+83EkVAswTAYIKwYBBQUHAQEEQDA+MDwGCCsGAQUFBzAChjBodHRwOi8vcmVwby5o
+YXJpY2EuZ3IvY2VydHMvSGFyaWNhUm9vdENBMjAxNS5jcnQwEQYDVR0gBAowCDAG
+BgRVHSAAMB0GA1UdJQQWMBQGCCsGAQUFBwMCBggrBgEFBQcDATA6BgNVHR8EMzAx
+MC+gLaArhilodHRwOi8vY3JsLmhhcmljYS5nci9IYXJpY2FSb290Q0EyMDE1LmNy
+bDAdBgNVHQ4EFgQUCkgjpmCkkgoz6pNbxVfqJU29Eu4wDgYDVR0PAQH/BAQDAgGG
+MA0GCSqGSIb3DQEBCwUAA4ICAQDAze/rVni3cYGP1BWkxXnIVynqHcC6Cw7kbkXo
+XBZAqF9ANQAKoz2YQ+WyzrparKVilMG6p6mdWTKeLy6eQDRhFSu9DrMYr4TBYxIp
+2e5ZLQBk96xbG3wSepBCkTDA0MA0NybzM0gF5nTa82BMCED8EQXliWWsgqUorXuk
+7msadosX793M42llmAcj1zJkADzlyzi4gcPvIc4skfmz1OW9jxxwyaR/41VYzPVy
+w7m0rsL9n3v5PCFJ1zrldYayKq9gOdwOZInNJQgPU6imXEFBZWdqdR+xdL7qHVMk
+dzBRoFqnYjr2bonw87Rxk7dAsdzmUUPJTIayzDTdtU78XkOl0FivJWBXDQPiVB2Z
+5NdOVPUANDnADA5octuC3YTG2ncpG9aNKM4ggAyr3imdnz5UZdioYkecv2TVJHT2
+lXE5PH/ifJs8p9+WFgyzFsW97BUF1nKsZiUWvlyPY9C9PKuhI4OMeTEA99YIRXYj
+XDSZq300ko5sXUVKVG2osAR4Sr3wqS5hLGNBfym7FZwsQ+/ja+fenEALAbAiEMpI
+9h71lpMpIhdx7rdRznNeSOok/pVMaqvBZ0IvAq+yXb7d8C+tAND0IcUxYyyJqkE7
+89RJdcGZO9JMXv4inBFIEuMAMlGPxzcroEx+ehDXyGR0asw7CooV2DCfiEJlIsKz
+LcPZew==
+-----END CERTIFICATE-----
+
