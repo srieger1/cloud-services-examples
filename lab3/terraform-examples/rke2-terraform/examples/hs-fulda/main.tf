@@ -22,7 +22,7 @@ locals {
     auth_url         = "https://private-cloud.informatik.hs-fulda.de:5000/v3"
     object_store_url = "https://10.32.5.250:443"
     region           = "RegionOne"
-    cacert_file      = "./os-trusted-cas"
+    cacert_file      = "../../../../../os-trusted-cas"
 
     cluster_name     = "${var.project}-k8s"
     image_name       = "ubuntu-22.04-jammy-server-cloud-image-amd64"
