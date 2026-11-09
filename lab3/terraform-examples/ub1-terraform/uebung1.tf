@@ -1,7 +1,7 @@
 # Define CloudServ group number
 variable "group_number" {
   type = string
-  default = "20"
+  default = "15"
 }
 
 ## OpenStack credentials can be used in a more secure way by using
@@ -14,9 +14,9 @@ variable "group_number" {
 locals {
   auth_url      = "https://private-cloud.informatik.hs-fulda.de:5000/v3"
   user_name     = "CloudServ${var.group_number}"
-  user_password = "<insert your password here>"
+  user_password = "<your-password-here>"
   tenant_name   = "CloudServ${var.group_number}"
-  cacert_file   = "../../../os-trusted-cas"
+  #cacert_file   = "../../../os-trusted-cas"
   region_name   = "RegionOne"
 
   router_name   = "CloudServ${var.group_number}-router"
@@ -46,7 +46,7 @@ provider "openstack" {
   password    = local.user_password
   auth_url    = local.auth_url
   region      = local.region_name
-  cacert_file = local.cacert_file
+  #cacert_file = local.cacert_file
   #use_octavia = true # only needed for openstack provider <2.0
 }
 
