@@ -1,9 +1,3 @@
-# Define CloudServ group number
-variable "group_number" {
-  type = string
-  default = "15"
-}
-
 ## OpenStack credentials can be used in a more secure way by using
 ## cloud.yaml from https://private-cloud.informatik.hs-fulda.de/project/api_access/clouds.yaml/
 
@@ -12,16 +6,16 @@ variable "group_number" {
 
 # Define OpenStack credentials, project config etc.
 locals {
-  auth_url      = "https://private-cloud.informatik.hs-fulda.de:5000/v3"
-  user_name     = "CloudServ${var.group_number}"
-  user_password = "<your-password-here>"
-  tenant_name   = "CloudServ${var.group_number}"
-  #cacert_file   = "../../../os-trusted-cas"
-  region_name   = "RegionOne"
+  # values sourced from clouds.yaml in this directory
+  cloud_config        = yamldecode(file("${path.module}/clouds.yaml"))["clouds"]["openstack"]
+  auth_url            = local.cloud_config.auth.auth_url
+  user_name           = local.cloud_config.auth.username
+  region_name         = local.cloud_config.region_name
+  #cacert_file         = "../../../os-trusted-cas"   # not needed now, using valid certificate
+  object_store_url    = "https://s3.private-cloud.informatik.hs-fulda.de"
 
-  router_name   = "CloudServ${var.group_number}-router"
+  router_name   = "${local.user_name}-router"
   dns_servers   = [ "10.33.16.100", "8.8.8.8" ]
-
   pubnet_name   = "ext_net"
 
   image_name    = "ubuntu-22.04-jammy-server-cloud-image-amd64"
@@ -37,36 +31,55 @@ terraform {
       version = ">= 1.46.0"
     }
   }
+  ## enable AFTER the first apply has created the container and the
+  ## EC2 credentials (see resources + output below), run
+  ##   terraform output -json s3
+  ## to get <access> and <secret>, then re-run
+  ## 'terraform init' to migrate the local state to S3:
+  ##   export AWS_ACCESS_KEY_ID=<access> AWS_SECRET_ACCESS_KEY=<secret>
+  ##   terraform init
   #backend "s3" {
   #  skip_region_validation      = true
   #  skip_credentials_validation = true
   #  skip_metadata_api_check     = true
   #  skip_requesting_account_id  = true
   #  use_path_style              = true
-  #  bucket             = "terraform-state"
+  #  bucket             = "CloudServ17-lab3-docker-terraform-backend" # must match openstack_objectstorage_container_v1.terraform-backend
   #  key                = "terraform.tfstate"
   #  region             = "eu-central-1"
   #  endpoints = {
-  #    s3 = "https://10.32.4.25:443/"
+  #    s3 = "https://s3.private-cloud.informatik.hs-fulda.de/"
   #  }
-  #  #container         = "terraform-state"
-  #  #archive_container = "terraform-state-archive"
-  #  #cloud             = "hsfulda-openstack" # using a context form a clouds.yaml file
   #}
 }
 
 # Configure the OpenStack Provider
 provider "openstack" {
-  user_name   = local.user_name
-  tenant_name = local.tenant_name
-  password    = local.user_password
-  auth_url    = local.auth_url
-  region      = local.region_name
+  cloud        = "openstack"
   #cacert_file = local.cacert_file
   #use_octavia = true # only needed for openstack provider <2.0
+  # temporary fix to compensate keystone public endpoint still using 
+  # a VIP with custom vault CA
+  endpoint_overrides = {
+    "identity" = local.auth_url 
+  }
 }
 
 
+
+###########################################################################
+#
+# create terraform backend container and ec2 credentials 
+#
+###########################################################################
+
+resource "openstack_objectstorage_container_v1" "terraform-backend" {
+  name          = "${local.user_name}-lab3-docker-terraform-backend"
+  force_destroy = true   # allows to delete backend container, but gives error, better: manual deletion
+}
+
+resource "openstack_identity_ec2_credential_v3" "s3" {
+}
 
 ###########################################################################
 #
@@ -76,7 +89,7 @@ provider "openstack" {
 
 # import keypair, if public_key is not specified, create new keypair to use
 resource "openstack_compute_keypair_v2" "terraform-keypair" {
-  name       = "my-terraform-pubkey"
+  name       = "${local.user_name}-lab3-docker-pubkey"
   #public_key = file("~/.ssh/id_rsa.pub")
 }
 
@@ -89,7 +102,7 @@ resource "openstack_compute_keypair_v2" "terraform-keypair" {
 ###########################################################################
 
 resource "openstack_networking_secgroup_v2" "terraform-secgroup" {
-  name        = "my-terraform-secgroup"
+  name        = "${local.user_name}-lab3-docker-secgroup"
   description = "for terraform instances"
 }
 
@@ -121,12 +134,12 @@ resource "openstack_networking_secgroup_rule_v2" "terraform-secgroup-rule-ssh" {
 ###########################################################################
 
 resource "openstack_networking_network_v2" "terraform-network-1" {
-  name           = "my-terraform-network-1"
+  name           = "${local.user_name}-lab3-docker-network-1"
   admin_state_up = "true"
 }
 
 resource "openstack_networking_subnet_v2" "terraform-subnet-1" {
-  name            = "my-terraform-subnet-1"
+  name            = "${local.user_name}-lab3-docker-subnet-1"
   network_id      = openstack_networking_network_v2.terraform-network-1.id
   cidr            = "192.168.255.0/24"
   ip_version      = 4
@@ -151,7 +164,7 @@ resource "openstack_networking_router_interface_v2" "router_interface_1" {
 ###########################################################################
 
 resource "openstack_compute_instance_v2" "terraform-docker-instance-1" {
-  name              = "my-terraform-docker-instance-1"
+  name              = "${local.user_name}-lab3-docker-instance-1"
   image_name        = local.image_name
   flavor_name       = local.flavor_name
   key_pair          = openstack_compute_keypair_v2.terraform-keypair.name
@@ -210,6 +223,19 @@ resource "openstack_networking_floatingip_v2" "fip_1" {
   port_id = data.openstack_networking_port_v2.port-1.id
 }
 
+
+
+###########################################################################
+#
+# output floating ip, s3 output contains sensitive information, only
+# visible by running "terraform output -json s3"
+#
+###########################################################################
 output "docker_vip_addr" {
   value = openstack_networking_floatingip_v2.fip_1
+}
+
+output "s3" {
+  value = openstack_identity_ec2_credential_v3.s3
+  sensitive = true
 }
